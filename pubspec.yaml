@@ -20,9 +20,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-dev_dependencies:
   cancellable: ^2.0.0
   anlifecycle: ^2.0.0
 
+dev_dependencies:
 
-dependency_overrides:

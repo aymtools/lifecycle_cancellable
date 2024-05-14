@@ -121,7 +121,7 @@ Future<T?> showCModalBottomSheet<T>({
   assert(debugCheckHasMaterialLocalizations(context));
   final NavigatorState navigator =
       Navigator.of(context, rootNavigator: useRootNavigator);
-  final MaterialLocalizations localizations = MaterialLocalizations.of(context);
+  // final MaterialLocalizations localizations = MaterialLocalizations.of(context);
 
   final route = ModalBottomSheetRoute<T>(
     builder: builder,

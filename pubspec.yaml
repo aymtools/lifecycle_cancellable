@@ -1,0 +1,20 @@
+name: an_lifecycle_cancellable
+description: "After merging Lifecycle and Cancellable, the toolkit provided in flutter"
+version: 0.0.1
+homepage:
+
+environment:
+  sdk: '>=2.17.0 <4.0.0'
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+
+  cancellable: ^2.0.0
+  anlifecycle: ^2.0.0
+
+
+dependency_overrides:

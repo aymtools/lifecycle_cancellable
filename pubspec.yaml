@@ -9,8 +9,7 @@ topics:
   - anlifecycle
   - cancel
   - cancellable
-  - cancel_token
-  - cancellation
+  - cancel-token
 
 environment:
   sdk: '>=2.17.0 <4.0.0'

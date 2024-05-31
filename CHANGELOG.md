@@ -1,3 +1,7 @@
+## 0.0.3
+
+* fix bug whenMoreThanState
+
 ## 0.0.2
 
 * export dialog/dialog_ext.dart

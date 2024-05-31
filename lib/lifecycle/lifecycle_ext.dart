@@ -30,9 +30,9 @@ abstract class _LifecycleEventObserverWrapper
 
 extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
   Future<LifecycleState> whenMoreThanState(LifecycleState state) =>
-      currentLifecycleState >= LifecycleState.started
+      currentLifecycleState >= state
           ? Future.value(currentLifecycleState)
-          : nextLifecycleState(LifecycleState.started);
+          : nextLifecycleState(state);
 
   Future<LifecycleEvent> whenFirstStart() =>
       whenMoreThanState(LifecycleState.started)
@@ -44,11 +44,12 @@ extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
 }
 
 extension LifecycleObserverRegistryMixinContextExt
-    on LifecycleObserverRegistryMixin {
+on LifecycleObserverRegistryMixin {
   Future<BuildContext> get requiredContext =>
       whenMoreThanState(LifecycleState.started).then((_) => context);
 
-  Future<S> requiredState<S extends State>() => requiredContext.then((value) {
+  Future<S> requiredState<S extends State>() =>
+      requiredContext.then((value) {
         if (value is StatefulElement && value.state is S) {
           return value.state as S;
         }
@@ -80,7 +81,8 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
 extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
   Cancellable makeLiveCancellable({Cancellable? other}) {
     assert(
-        currentLifecycleState > LifecycleState.destroyed, '必须在destroyed之前使用');
+    currentLifecycleState >
+        LifecycleState.destroyed, '必须在destroyed之前使用');
     return _map
         .putIfAbsent(this, () => _CacheMapObserver(this))
         ._makeCancellableForLive(other: other);
@@ -88,8 +90,8 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
 
   void repeatOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
-      bool runWithDelayed = false,
-      required FutureOr<T> Function(Cancellable cancellable) block}) {
+        bool runWithDelayed = false,
+        required FutureOr<T> Function(Cancellable cancellable) block}) {
     Cancellable? cancellable;
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
@@ -117,8 +119,8 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
 
   Stream<T> collectOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
-      bool runWithDelayed = false,
-      required FutureOr<T> Function(Cancellable cancellable) block}) {
+        bool runWithDelayed = false,
+        required FutureOr<T> Function(Cancellable cancellable) block}) {
     StreamController<T> controller = StreamController();
     controller.bindCancellable(makeLiveCancellable());
 
@@ -159,13 +161,13 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
 extension StreamLifecycleExt<T> on Stream<T> {
   Stream<T> bindLifecycle(LifecycleObserverRegistry registry,
       {LifecycleState state = LifecycleState.started,
-      bool repeatLastOnRestart = false}) {
+        bool repeatLastOnRestart = false}) {
     StreamTransformer<T, T> transformer;
     if (repeatLastOnRestart) {
       T? cache;
       EventSink<T>? eventSink;
       transformer =
-          StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
+      StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
         if (registry.currentLifecycleState >= state) {
           cache = null;
           eventSink = null;
@@ -186,7 +188,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
           });
     } else {
       transformer =
-          StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
+      StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
         if (registry.currentLifecycleState >= state) {
           sink.add(data);
         }
@@ -194,7 +196,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
     }
 
     return bindCancellable(registry.makeLiveCancellable(),
-            closeWhenCancel: false)
+        closeWhenCancel: false)
         .transform(transformer);
   }
 }

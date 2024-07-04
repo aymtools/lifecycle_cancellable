@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
+import 'package:cancellable/src/tools/never_exec_future.dart';
 import 'package:flutter/material.dart';
 
 abstract class _LifecycleEventObserverWrapper
@@ -29,6 +30,7 @@ abstract class _LifecycleEventObserverWrapper
 }
 
 extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
+  @Deprecated('use [launchWhenLifecycleStateAtLeast]')
   Future<LifecycleState> whenMoreThanState(LifecycleState state) =>
       currentLifecycleState >= state
           ? Future.value(currentLifecycleState)
@@ -44,12 +46,11 @@ extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
 }
 
 extension LifecycleObserverRegistryMixinContextExt
-on LifecycleObserverRegistryMixin {
+    on LifecycleObserverRegistryMixin {
   Future<BuildContext> get requiredContext =>
       whenMoreThanState(LifecycleState.started).then((_) => context);
 
-  Future<S> requiredState<S extends State>() =>
-      requiredContext.then((value) {
+  Future<S> requiredState<S extends State>() => requiredContext.then((value) {
         if (value is StatefulElement && value.state is S) {
           return value.state as S;
         }
@@ -79,124 +80,228 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
 }
 
 extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
+  /// 构建一个绑定到lifecycle的Cancellable
   Cancellable makeLiveCancellable({Cancellable? other}) {
-    assert(
-    currentLifecycleState >
-        LifecycleState.destroyed, '必须在destroyed之前使用');
+    assert(currentLifecycleState > LifecycleState.destroyed,
+        'Must be used before destroyed.');
+    if (currentLifecycleState <= LifecycleState.destroyed) {
+      return Cancellable()..cancel();
+    }
     return _map
         .putIfAbsent(this, () => _CacheMapObserver(this))
         ._makeCancellableForLive(other: other);
   }
 
+  /// 当高于某个状态时执行给定的block
   void repeatOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
-        bool runWithDelayed = false,
-        required FutureOr<T> Function(Cancellable cancellable) block}) {
-    Cancellable? cancellable;
+      bool runWithDelayed = false,
+      Cancellable? cancellable,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
+    if (cancellable?.isUnavailable == true) return;
+    Cancellable? checkable;
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
-          (cancellable == null || cancellable?.isUnavailable == true)) {
-        cancellable = makeLiveCancellable();
+          (checkable == null || checkable?.isUnavailable == true)) {
+        checkable = makeLiveCancellable(other: cancellable);
         try {
           if (runWithDelayed) {
             //转到下一个事件循环，可以过滤掉连续的状态变化
             await Future.delayed(Duration.zero);
-            if (cancellable!.isUnavailable) return;
           }
-          final result = block(cancellable!);
+          if (checkable!.isUnavailable) return;
+          final result = block(checkable!);
           if (result is Future<T>) {
             await Future.delayed(Duration.zero);
-            if (cancellable?.isAvailable == true) await result;
+            if (checkable?.isAvailable == true) await result;
           }
         } catch (_) {}
-      } else if (state < targetState && cancellable?.isAvailable == true) {
-        cancellable?.cancel();
-        cancellable = null;
+      } else if (state < targetState && checkable?.isAvailable == true) {
+        checkable?.cancel();
+        checkable = null;
       }
     });
     addLifecycleObserver(observer, fullCycle: true);
+    cancellable?.whenCancel
+        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
   }
 
+  ///当高于某个状态时执行给定的block,并将结构收集起来为Stream
   Stream<T> collectOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
-        bool runWithDelayed = false,
-        required FutureOr<T> Function(Cancellable cancellable) block}) {
-    StreamController<T> controller = StreamController();
-    controller.bindCancellable(makeLiveCancellable());
+      bool runWithDelayed = false,
+      Cancellable? cancellable,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
+    if (cancellable?.isUnavailable == true) return Stream<T>.empty();
 
-    Cancellable? cancellable;
+    StreamController<T> controller = StreamController();
+    controller.bindCancellable(makeLiveCancellable(other: cancellable));
+
+    Cancellable? checkable;
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
-          (cancellable == null || cancellable?.isUnavailable == true)) {
-        cancellable = makeLiveCancellable();
+          (checkable == null || checkable?.isUnavailable == true)) {
+        checkable = makeLiveCancellable(other: cancellable);
         try {
           if (runWithDelayed) {
             //转到下一个事件循环，可以过滤掉连续的状态变化
             await Future.delayed(Duration.zero);
-            if (cancellable!.isUnavailable) return;
           }
-          final result = block(cancellable!);
+          if (checkable!.isUnavailable) return;
+          final result = block(checkable!);
           if (result is Future<T>) {
             await Future.delayed(Duration.zero);
-            if (cancellable?.isAvailable == true) {
+            if (checkable?.isAvailable == true) {
               final r = await result;
-              if (cancellable?.isAvailable == true) controller.add(r);
+              if (checkable?.isAvailable == true) controller.add(r);
             }
           } else {
             controller.add(result);
           }
         } catch (_) {}
-      } else if (state < targetState && cancellable?.isAvailable == true) {
-        cancellable?.cancel();
-        cancellable = null;
+      } else if (state < targetState && checkable?.isAvailable == true) {
+        checkable?.cancel();
+        checkable = null;
       }
     });
 
     addLifecycleObserver(observer, fullCycle: true);
 
+    cancellable?.whenCancel
+        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+
     return controller.stream;
   }
-}
 
-extension StreamLifecycleExt<T> on Stream<T> {
-  Stream<T> bindLifecycle(LifecycleObserverRegistry registry,
-      {LifecycleState state = LifecycleState.started,
-        bool repeatLastOnRestart = false}) {
-    StreamTransformer<T, T> transformer;
-    if (repeatLastOnRestart) {
-      T? cache;
-      EventSink<T>? eventSink;
-      transformer =
-      StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
-        if (registry.currentLifecycleState >= state) {
-          cache = null;
-          eventSink = null;
-          sink.add(data);
-        } else {
-          cache = data;
-          eventSink = sink;
-        }
-      });
-      registry.repeatOnLifecycle(
-          targetState: state,
-          block: (Cancellable cancellable) {
-            if (cache != null && eventSink != null) {
-              eventSink?.add(cache as T);
-              eventSink = null;
-              cache = null;
+  /// 当下一个事件分发时，执行一次给定的block
+  Future<T> launchWhenNextLifecycleEvent<T>(
+      {LifecycleEvent targetEvent = LifecycleEvent.start,
+      bool runWithDelayed = false,
+      Cancellable? cancellable,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
+    Completer<T> completer = Completer();
+    late final LifecycleObserver observer;
+    Cancellable? checkable;
+    observer = LifecycleObserver.eventAny((event) async {
+      if (event == targetEvent && checkable == null) {
+        checkable = makeLiveCancellable(other: cancellable);
+        try {
+          if (runWithDelayed) {
+            await Future.delayed(Duration.zero);
+          }
+          if (checkable!.isUnavailable) {
+            removeLifecycleObserver(observer, fullCycle: false);
+            return;
+          }
+          checkable!.whenCancel.then(
+              (value) => removeLifecycleObserver(observer, fullCycle: false));
+
+          final result = block(checkable!);
+          if (result is Future<T>) {
+            await Future.delayed(Duration.zero);
+            if (checkable?.isAvailable == true) {
+              final r = await result;
+              if (checkable?.isAvailable == true && !completer.isCompleted) {
+                completer.complete(r);
+              }
             }
-          });
-    } else {
-      transformer =
-      StreamTransformer<T, T>.fromHandlers(handleData: (data, sink) {
-        if (registry.currentLifecycleState >= state) {
-          sink.add(data);
+          } else {
+            completer.complete(result);
+          }
+        } catch (error, stackTree) {
+          if (error != checkable?.reasonAsException && !completer.isCompleted) {
+            completer.completeError(error, stackTree);
+          }
         }
-      });
+      } else if (checkable?.isAvailable == true) {
+        checkable?.cancel();
+      }
+    });
+
+    addLifecycleObserver(observer,
+        startWith: currentLifecycleState, fullCycle: true);
+
+    final result = completer.future;
+
+    result.whenComplete(
+        () => removeLifecycleObserver(observer, fullCycle: false));
+    return result;
+  }
+
+  /// 当高于某个状态时，执行一次给定的block
+  Future<T> launchWhenLifecycleStateAtLeast<T>(
+      {LifecycleState targetState = LifecycleState.started,
+      bool runWithDelayed = false,
+      Cancellable? cancellable,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
+    if (runWithDelayed == true && currentLifecycleState >= targetState) {
+      Cancellable checkable = makeLiveCancellable(other: cancellable);
+      if (checkable.isUnavailable) {
+        return NeverExecFuture();
+      }
+      var result = block(checkable);
+      if (result is Future<T>) {
+        late final LifecycleObserver observer;
+        observer = LifecycleObserver.stateChange((state) {
+          if (state < targetState && checkable.isAvailable == true) {
+            checkable.cancel();
+            removeLifecycleObserver(observer, fullCycle: false);
+          }
+        });
+        addLifecycleObserver(observer,
+            fullCycle: true, startWith: currentLifecycleState);
+        result.whenComplete(
+            () => removeLifecycleObserver(observer, fullCycle: false));
+        return result;
+      } else {
+        return Future.sync(() => result);
+      }
     }
 
-    return bindCancellable(registry.makeLiveCancellable(),
-        closeWhenCancel: false)
-        .transform(transformer);
+    Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
+
+    Cancellable? checkable;
+    late final LifecycleObserver observer;
+    observer = LifecycleObserver.stateChange((state) async {
+      if (state >= targetState && checkable == null) {
+        checkable = makeLiveCancellable(other: cancellable);
+        try {
+          if (runWithDelayed) {
+            await Future.delayed(Duration.zero);
+          }
+          if (checkable!.isUnavailable) {
+            removeLifecycleObserver(observer, fullCycle: false);
+            return;
+          }
+          checkable!.whenCancel.then(
+              (value) => removeLifecycleObserver(observer, fullCycle: false));
+
+          final result = block(checkable!);
+          if (result is Future<T>) {
+            await Future.delayed(Duration.zero);
+            if (checkable?.isAvailable == true) {
+              final r = await result;
+              if (checkable?.isAvailable == true && !completer.isCompleted) {
+                completer.complete(r);
+              }
+            }
+          } else {
+            completer.complete(result);
+          }
+        } catch (error, stackTree) {
+          if (error != checkable?.reasonAsException && !completer.isCompleted) {
+            completer.completeError(error, stackTree);
+          }
+        }
+      } else if (state < targetState && checkable?.isAvailable == true) {
+        checkable?.cancel();
+      }
+    });
+
+    addLifecycleObserver(observer, fullCycle: true);
+    final result = completer.future;
+    result.whenComplete(
+        () => removeLifecycleObserver(observer, fullCycle: false));
+    return result;
   }
 }

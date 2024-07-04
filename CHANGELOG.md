@@ -1,3 +1,8 @@
+## 0.0.4
+
+* Migration of Listenable extensions.
+* Adding a new launch to the lifecycle (executed only once).
+
 ## 0.0.3
 
 * fix bug whenMoreThanState

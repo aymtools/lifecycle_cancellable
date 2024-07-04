@@ -2,6 +2,7 @@ import 'package:cancellable/cancellable.dart';
 import 'package:flutter/material.dart';
 
 extension NavigatorCancellableRoute on NavigatorState {
+  /// 推入一个可撤销的route
   Future<T?> pushCancellableRoute<T extends Object?>(
       Route<T> route, Cancellable? cancellable) {
     if (cancellable == null) return push<T>(route);
@@ -17,6 +18,7 @@ extension NavigatorCancellableRoute on NavigatorState {
     return push<T>(route).whenComplete(() => showing.cancel());
   }
 
+  /// 推入一个可撤销的dialog
   Future<T?> showDialog<T>({
     required WidgetBuilder builder,
     Cancellable? cancellable,

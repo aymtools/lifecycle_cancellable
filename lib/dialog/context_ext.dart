@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'dialog_ext.dart' as d;
 
 extension BuildContextDialogCancellable on BuildContext {
+  ///
   Future<T?> showCDialog<T>({
     required WidgetBuilder builder,
     Cancellable? cancellable,

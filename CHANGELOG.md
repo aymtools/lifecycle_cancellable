@@ -2,6 +2,8 @@
 
 * Migration of Listenable extensions.
 * Adding a new launch to the lifecycle (executed only once).
+* Added extension lifecycleExtData, which can store data based on the lifecycle and automatically
+  clean it up upon destroy.
 
 ## 0.0.3
 

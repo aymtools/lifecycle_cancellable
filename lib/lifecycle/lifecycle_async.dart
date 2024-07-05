@@ -41,9 +41,9 @@ extension StreamLifecycleExt<T> on Stream<T> {
     if (repeatLastOnRestart) {
       T? cache;
       EventSink<T>? eventSink;
-
+      final lastCleanCache = cleanCache;
       cleanCacheDate() {
-        cleanCache();
+        lastCleanCache.call();
         cache = null;
         eventSink = null;
       }

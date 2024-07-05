@@ -5,16 +5,16 @@ final Map<Lifecycle, LifecycleExtDataObserver> _liveExtDataObserver =
     weak.WeakMap();
 
 class TypedKey<T> {
-  final Object other;
+  final Object? key;
 
-  TypedKey(this.other);
+  TypedKey([this.key]);
 
   @override
-  int get hashCode => Object.hashAll([T, other]);
+  int get hashCode => Object.hashAll([T, key]);
 
   @override
   bool operator ==(Object other) {
-    return other is TypedKey<T> && other.other == other.other;
+    return other is TypedKey<T> && key == other.key;
   }
 }
 

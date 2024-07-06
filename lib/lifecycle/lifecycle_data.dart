@@ -54,8 +54,8 @@ class LifecycleExtDataObserver with LifecycleEventObserver {
 extension LifecycleTypedDataExt on LifecycleObserverRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
-    assert(
-        currentLifecycleState < LifecycleState.initialized, '不可知destroyed下使用');
+    assert(currentLifecycleState > LifecycleState.destroyed,
+        'Must be used before destroyed.');
     final observer = _liveExtDataObserver.putIfAbsent(lifecycle, () {
       final observer = LifecycleExtDataObserver();
       addLifecycleObserver(observer, fullCycle: true);

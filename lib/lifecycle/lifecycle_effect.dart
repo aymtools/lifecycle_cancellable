@@ -83,10 +83,10 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
     Launcher<T>? repeatOnStarted,
     Launcher<T>? repeatOnResumed,
   }) {
-    assert(currentLifecycleState <= LifecycleState.destroyed,
-        'Abnormal status unavailable');
-    if (data == null && factory == null) {
-      throw 'Abnormal status unavailable';
+    assert(currentLifecycleState > LifecycleState.destroyed,
+        'Must be used before destroyed.');
+    if (currentLifecycleState > LifecycleState.destroyed) {
+      throw 'Must be used before destroyed.';
     }
     assert(data == null && factory == null,
         'data and factory cannot be null at the same time');

@@ -27,6 +27,13 @@ class LifecycleExtData {
     return _data.putIfAbsent(key, ifAbsent) as T;
   }
 
+  /// 替换为新数据  返回结构为旧数据如果不存在旧数据则返回null
+  T? replace<T>(TypedKey<T> key, T data) {
+    final last = get<T>(key);
+    _data[key] = data;
+    return last;
+  }
+
   /// 根据key获取
   T? get<T>(TypedKey<T> key) => _data[key] as T?;
 
@@ -44,7 +51,7 @@ class LifecycleExtDataObserver with LifecycleEventObserver {
   }
 }
 
-extension LifeTypedDataExt on LifecycleObserverRegistry {
+extension LifecycleTypedDataExt on LifecycleObserverRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
     assert(

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'navigator_ext.dart';
 
 Future<T?> showCDialog<T>({
@@ -264,4 +265,3 @@ void showCLicensePage({
   );
   navigator.pushCancellableRoute(route, cancellable);
 }
-

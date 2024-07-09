@@ -21,6 +21,7 @@ dependencies:
 
   cancellable: ^2.0.0
   anlifecycle: ^2.0.2
+  weak_collections: ^1.1.0
 
 dev_dependencies:
 

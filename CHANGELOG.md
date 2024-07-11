@@ -1,3 +1,7 @@
+## 0.0.5
+
+* Postpone the execution of resumed of withLifecycleEffect (wait for the next event loop)
+
 ## 0.0.4+1
 
 * Fix lifecycleExtData automatic cleanup exception

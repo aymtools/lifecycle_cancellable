@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_data.dart';
 import 'package:anlifecycle/anlifecycle.dart';
+import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart' as weak;
 
 typedef Launcher<T> = FutureOr Function(T data);
@@ -63,9 +64,21 @@ class _LauncherLifecycleObserver<T>
         state == LifecycleState.resumed &&
         launchOnFirstResume != null) {
       _firstResume = false;
-      launchOnFirstResume!(_data);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        /// 特殊情况下会resume触发在build之前故将此事件推迟
+        launchOnFirstResume!(_data);
+      });
     }
-    _repeatOn[state]?.call(_data);
+    if (state == LifecycleState.resumed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        /// 特殊情况下会resume触发在build之前故将此事件推迟
+        if (owner.lifecycle.currentState >= LifecycleState.resumed) {
+          _repeatOn[LifecycleState.resumed]?.call(_data);
+        }
+      });
+    } else {
+      _repeatOn[state]?.call(_data);
+    }
     if (state == LifecycleState.destroyed) {
       callDestroyData();
     }

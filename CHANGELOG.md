@@ -1,3 +1,7 @@
+## 0.0.4+1
+
+* Fix lifecycleExtData automatic cleanup exception
+
 ## 0.0.4
 
 * Migration of Listenable extensions.

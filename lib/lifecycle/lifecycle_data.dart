@@ -2,7 +2,7 @@ import 'package:anlifecycle/anlifecycle.dart';
 import 'package:weak_collections/weak_collections.dart' as weak;
 
 final Map<Lifecycle, LifecycleExtDataObserver> _liveExtDataObserver =
-    weak.WeakMap();
+weak.WeakMap();
 
 class TypedKey<T> {
   final Object? key;
@@ -55,11 +55,11 @@ extension LifecycleTypedDataExt on LifecycleObserverRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
     assert(currentLifecycleState > LifecycleState.destroyed,
-        'Must be used before destroyed.');
+    'Must be used before destroyed.');
     final observer = _liveExtDataObserver.putIfAbsent(lifecycle, () {
       final observer = LifecycleExtDataObserver();
       addLifecycleObserver(observer, fullCycle: true);
-      return LifecycleExtDataObserver();
+      return observer;
     });
     return observer._extData;
   }

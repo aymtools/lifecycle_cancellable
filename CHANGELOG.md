@@ -1,6 +1,7 @@
 ## 0.0.5
 
 * Postpone the execution of resumed of withLifecycleEffect (wait for the next event loop)
+* fix withLifecycleEffect assert judgment error
 
 ## 0.0.4+1
 

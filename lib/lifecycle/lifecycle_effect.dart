@@ -98,10 +98,10 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
   }) {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'Must be used before destroyed.');
-    if (currentLifecycleState > LifecycleState.destroyed) {
+    if (currentLifecycleState <= LifecycleState.destroyed) {
       throw 'Must be used before destroyed.';
     }
-    assert(data == null && factory == null,
+    assert(data != null || factory != null,
         'data and factory cannot be null at the same time');
     if (data == null && factory == null) {
       throw 'data and factory cannot be null at the same time';

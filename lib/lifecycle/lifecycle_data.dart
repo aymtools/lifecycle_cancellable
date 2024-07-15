@@ -1,9 +1,6 @@
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:weak_collections/weak_collections.dart' as weak;
 
-final Map<Lifecycle, LifecycleExtDataObserver> _liveExtDataObserver =
-weak.WeakMap();
-
 class TypedKey<T> {
   final Object? key;
 
@@ -41,26 +38,17 @@ class LifecycleExtData {
   T? remove<T>(TypedKey<T> key) => _data.remove(key) as T?;
 }
 
-class LifecycleExtDataObserver with LifecycleEventObserver {
-  late final LifecycleExtData _extData = LifecycleExtData();
-
-  @override
-  void onDestroy(LifecycleOwner owner) {
-    super.onDestroy(owner);
-    _extData._data.clear();
-  }
-}
+final Map<Lifecycle, LifecycleExtData> _liveExtDataCache = weak.WeakMap();
 
 extension LifecycleTypedDataExt on LifecycleObserverRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
     assert(currentLifecycleState > LifecycleState.destroyed,
-    'Must be used before destroyed.');
-    final observer = _liveExtDataObserver.putIfAbsent(lifecycle, () {
-      final observer = LifecycleExtDataObserver();
-      addLifecycleObserver(observer, fullCycle: true);
-      return observer;
+        'Must be used before destroyed.');
+    return _liveExtDataCache.putIfAbsent(lifecycle, () {
+      lifecycle.addObserver(LifecycleObserver.onEventDestroy(
+          (owner) => _liveExtDataCache.remove(owner.lifecycle)?._data.clear()));
+      return LifecycleExtData();
     });
-    return observer._extData;
   }
 }

@@ -1,3 +1,8 @@
+## 0.0.6
+
+* Continue to expand the launch series
+* fix withLifecycleEffect bugs
+
 ## 0.0.5
 
 * Postpone the execution of resumed of withLifecycleEffect (wait for the next event loop)

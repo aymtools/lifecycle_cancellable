@@ -304,4 +304,84 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
         () => removeLifecycleObserver(observer, fullCycle: false));
     return result;
   }
+
+  void repeatOnLifecycleStarted<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      repeatOnLifecycle(
+          targetState: LifecycleState.started,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  void repeatOnLifecycleResumed<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      repeatOnLifecycle(
+          targetState: LifecycleState.resumed,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  Stream<T> collectOnLifecycleStarted<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      collectOnLifecycle(
+          targetState: LifecycleState.started,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  Stream<T> collectOnLifecycleResumed<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      collectOnLifecycle(
+          targetState: LifecycleState.resumed,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  Future<T> launchWhenNextLifecycleEventStart<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      launchWhenNextLifecycleEvent(
+          targetEvent: LifecycleEvent.start,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  Future<T> launchWhenNextLifecycleEventResume<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      launchWhenNextLifecycleEvent(
+          targetEvent: LifecycleEvent.resume,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  Future<T> launchWhenLifecycleStateStarted<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      launchWhenLifecycleStateAtLeast(
+          targetState: LifecycleState.started,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  Future<T> launchWhenLifecycleStateResumed<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      launchWhenLifecycleStateAtLeast(
+          targetState: LifecycleState.resumed,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
 }

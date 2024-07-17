@@ -34,7 +34,7 @@ class _LauncherLifecycleObserver<T>
   void onStart(LifecycleOwner owner) {
     super.onStart(owner);
     if (_firstStart && launchOnFirstStart != null) {
-      _firstCreate = false;
+      _firstStart = false;
       launchOnFirstStart!(_data);
     }
   }
@@ -42,9 +42,12 @@ class _LauncherLifecycleObserver<T>
   @override
   void onResume(LifecycleOwner owner) {
     super.onResume(owner);
-    if (_firstResume && launchOnFirstStart != null) {
+    if (_firstResume && launchOnFirstResume != null) {
       _firstResume = false;
-      launchOnFirstStart!(_data);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        /// 特殊情况下会resume触发在build之前故将此事件推迟
+        launchOnFirstResume!(_data);
+      });
     }
   }
 
@@ -120,7 +123,7 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
     Map<Object, _LauncherLifecycleObserver> _lifecycleEffectObservers =
         lifecycleExtData.putIfAbsent(
             TypedKey<Map<Object, _LauncherLifecycleObserver>>(
-                'LifecycleEffect'),
+                withLifecycleEffect),
             () => weak.WeakMap());
 
     _LauncherLifecycleObserver<T> observer =

@@ -146,7 +146,13 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     return result;
   }
 
-  Future<T> whenValue(bool Function(T value) test, {Cancellable? cancellable}) {
+  @Deprecated('use [firstValue]')
+  Future<T> whenValue(bool Function(T value) test,
+          {Cancellable? cancellable}) =>
+      firstValue(test, cancellable: cancellable);
+
+  Future<T> firstValue(bool Function(T value) test,
+      {Cancellable? cancellable}) {
     final v = value;
     if (test(v)) {
       return Future.value(v);

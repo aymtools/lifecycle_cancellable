@@ -10,14 +10,16 @@ typedef Launcher<T> = FutureOr Function(T data);
 class _LauncherLifecycleObserver<T>
     with LifecycleStateChangeObserver, LifecycleEventObserver {
   final T _data;
-  final void Function() callDestroyData;
+  LifecycleObserverRegistry? _registry;
 
   Launcher<T>? launchOnFirstCreate;
   Launcher<T>? launchOnFirstStart;
   Launcher<T>? launchOnFirstResume;
+  Launcher<T>? launchOnDestroy;
   Map<LifecycleState, Launcher<T>> _repeatOn = {};
 
-  _LauncherLifecycleObserver(this._data, this.callDestroyData);
+  _LauncherLifecycleObserver(
+      this._data, LifecycleObserverRegistry this._registry);
 
   bool _firstCreate = true, _firstStart = true, _firstResume = true;
 
@@ -43,12 +45,14 @@ class _LauncherLifecycleObserver<T>
   void onResume(LifecycleOwner owner) {
     super.onResume(owner);
     if (_firstResume && launchOnFirstResume != null) {
-      _firstResume = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        /// 特殊情况下会resume触发在build之前故将此事件推迟
-        launchOnFirstResume!(_data);
-      });
+      _dRunOnResume(owner);
     }
+  }
+
+  @override
+  void onDestroy(LifecycleOwner owner) {
+    super.onDestroy(owner);
+    launchOnDestroy?.call(_data);
   }
 
   @override
@@ -66,11 +70,7 @@ class _LauncherLifecycleObserver<T>
     } else if (_firstResume &&
         state == LifecycleState.resumed &&
         launchOnFirstResume != null) {
-      _firstResume = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        /// 特殊情况下会resume触发在build之前故将此事件推迟
-        launchOnFirstResume!(_data);
-      });
+      _dRunOnResume(owner);
     }
     if (state == LifecycleState.resumed) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -82,9 +82,23 @@ class _LauncherLifecycleObserver<T>
     } else {
       _repeatOn[state]?.call(_data);
     }
-    if (state == LifecycleState.destroyed) {
-      callDestroyData();
+    if (_registry != null && owner.lifecycle.currentState == state) {
+      //执行转移将当前的observer转移到lifecycle上 使销毁的时机绑定在lifecycle上
+      _registry?.removeLifecycleObserver(this, fullCycle: false);
+      _registry = null;
+      owner.lifecycle.addObserver(this, state);
     }
+  }
+
+  _dRunOnResume(LifecycleOwner owner) {
+    _firstResume = false;
+    final l = owner.lifecycle;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      /// 特殊情况下会resume触发在build之前故将此事件推迟
+      if (l.currentState > LifecycleState.destroyed) {
+        launchOnFirstResume!(_data);
+      }
+    });
   }
 }
 
@@ -100,6 +114,7 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
     Launcher<T>? launchOnFirstResume,
     Launcher<T>? repeatOnStarted,
     Launcher<T>? repeatOnResumed,
+    Launcher<T>? launchOnDestroy,
   }) {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'Must be used before destroyed.');
@@ -118,7 +133,8 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
         launchOnFirstStart == null &&
         launchOnFirstResume == null &&
         repeatOnStarted == null &&
-        repeatOnResumed == null) {
+        repeatOnResumed == null &&
+        launchOnDestroy == null) {
       return value;
     }
 
@@ -130,21 +146,26 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
 
     _LauncherLifecycleObserver<T> observer =
         _lifecycleEffectObservers.putIfAbsent(value as Object, () {
-      final o = _LauncherLifecycleObserver<T>(
-          value, () => _lifecycleEffectObservers.remove(value));
+      final o = _LauncherLifecycleObserver<T>(value, this);
       o.launchOnFirstCreate = launchOnFirstCreate;
       o.launchOnFirstStart = launchOnFirstStart;
       o.launchOnFirstResume = launchOnFirstResume;
+      o.launchOnDestroy = launchOnDestroy;
 
       if (repeatOnStarted != null)
         o._repeatOn[LifecycleState.started] = repeatOnStarted;
       if (repeatOnResumed != null)
         o._repeatOn[LifecycleState.resumed] = repeatOnResumed;
 
+      //加入销毁的逻辑
+      lifecycle.addObserver(LifecycleObserver.eventDestroy(
+          () => _lifecycleEffectObservers.remove(value)));
+
       addLifecycleObserver(o);
       return o;
     }) as _LauncherLifecycleObserver<T>;
 
+    observer.launchOnDestroy = launchOnDestroy;
     if (repeatOnStarted != null)
       observer._repeatOn[LifecycleState.started] = repeatOnStarted;
     if (repeatOnResumed != null)

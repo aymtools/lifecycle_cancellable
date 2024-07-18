@@ -2,6 +2,7 @@
 
 * Continue to expand the launch series
 * fix withLifecycleEffect bugs
+* fix lifecycleExtData bugs
 
 ## 0.0.5
 

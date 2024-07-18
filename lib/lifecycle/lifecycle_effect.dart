@@ -88,6 +88,8 @@ class _LauncherLifecycleObserver<T>
   }
 }
 
+const _withLifecycleEffectToken = Object();
+
 extension LifecycleLauncherExt on LifecycleObserverRegistry {
   /// 直接使用生命周期对类对象进行操作
   T withLifecycleEffect<T extends Object>({
@@ -123,7 +125,7 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
     Map<Object, _LauncherLifecycleObserver> _lifecycleEffectObservers =
         lifecycleExtData.putIfAbsent(
             TypedKey<Map<Object, _LauncherLifecycleObserver>>(
-                withLifecycleEffect),
+                _withLifecycleEffectToken),
             () => weak.WeakMap());
 
     _LauncherLifecycleObserver<T> observer =

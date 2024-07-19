@@ -23,6 +23,8 @@ class _LauncherLifecycleObserver<T>
 
   bool _firstCreate = true, _firstStart = true, _firstResume = true;
 
+  LifecycleState _lastState = LifecycleState.destroyed;
+
   @override
   void onCreate(LifecycleOwner owner) {
     super.onCreate(owner);
@@ -72,17 +74,22 @@ class _LauncherLifecycleObserver<T>
         launchOnFirstResume != null) {
       _dRunOnResume(owner);
     }
-    if (state == LifecycleState.resumed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        /// 特殊情况下会resume触发在build之前故将此事件推迟
-        if (owner.lifecycle.currentState >= LifecycleState.resumed) {
-          _repeatOn[LifecycleState.resumed]?.call(_data);
-        }
-      });
-    } else {
-      _repeatOn[state]?.call(_data);
+    if (_lastState < state) {
+      if (state == LifecycleState.resumed) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          /// 特殊情况下会resume触发在build之前故将此事件推迟
+          if (owner.lifecycle.currentState >= LifecycleState.resumed) {
+            _repeatOn[LifecycleState.resumed]?.call(_data);
+          }
+        });
+      } else {
+        _repeatOn[state]?.call(_data);
+      }
     }
-    if (_registry != null && owner.lifecycle.currentState == state) {
+    _lastState = state;
+    if (_registry != null &&
+        _registry!.currentLifecycleState > LifecycleState.initialized &&
+        owner.lifecycle.currentState == state) {
       //执行转移将当前的observer转移到lifecycle上 使销毁的时机绑定在lifecycle上
       _registry?.removeLifecycleObserver(this, fullCycle: false);
       _registry = null;
@@ -161,7 +168,7 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
       lifecycle.addObserver(LifecycleObserver.eventDestroy(
           () => _lifecycleEffectObservers.remove(value)));
 
-      addLifecycleObserver(o);
+      addLifecycleObserver(o, fullCycle: true);
       return o;
     }) as _LauncherLifecycleObserver<T>;
 

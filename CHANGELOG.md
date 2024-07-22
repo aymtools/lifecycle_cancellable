@@ -1,3 +1,7 @@
+## 0.0.7
+
+* Continue to expand the launch series
+
 ## 0.0.6
 
 * Continue to expand the launch series

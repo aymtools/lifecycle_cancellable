@@ -384,4 +384,32 @@ extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
           runWithDelayed: runWithDelayed,
           cancellable: cancellable,
           block: block);
+
+  Future<T> launchWhenLifecycleStateDestroyed<T>(
+      {bool runWithDelayed = false,
+      Cancellable? cancellable,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
+    Completer<T> completer = Completer.sync();
+    addLifecycleObserver(LifecycleObserver.stateChange((state) {
+      if (state == LifecycleState.destroyed &&
+          !completer.isCompleted &&
+          cancellable?.isUnavailable != true) {
+        completer.complete(block(cancellable ?? Cancellable()));
+      }
+    }));
+    return completer.future;
+  }
+
+  Future<T> launchWhenLifecycleEventDestroy<T>(
+      {bool runWithDelayed = false,
+      Cancellable? cancellable,
+      required FutureOr<T> Function(Cancellable cancellable) block}) {
+    Completer<T> completer = Completer.sync();
+    addLifecycleObserver(LifecycleObserver.eventDestroy(() {
+      if (!completer.isCompleted && cancellable?.isUnavailable != true) {
+        completer.complete(block(cancellable ?? Cancellable()));
+      }
+    }));
+    return completer.future;
+  }
 }

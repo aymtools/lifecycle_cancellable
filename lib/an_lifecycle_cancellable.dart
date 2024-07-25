@@ -1,5 +1,6 @@
 library lifecycle_cancellable;
 
+export 'async/stream_ext.dart';
 export 'dialog/context_ext.dart';
 export 'dialog/dialog_ext.dart';
 export 'dialog/navigator_ext.dart';

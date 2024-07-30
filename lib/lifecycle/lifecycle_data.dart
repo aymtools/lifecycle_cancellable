@@ -40,15 +40,24 @@ class LifecycleExtData {
 
 final Map<Lifecycle, LifecycleExtData> _liveExtDataCache = weak.WeakMap();
 
-extension LifecycleTypedDataExt on LifecycleObserverRegistry {
+extension LifecycleTypedDataExt on Lifecycle {
+  /// 获取lifecycle管理的扩展数据 于destroy时自动清理
+  LifecycleExtData get lifecycleExtData {
+    assert(currentState > LifecycleState.destroyed,
+        'Must be used before destroyed.');
+    return _liveExtDataCache.putIfAbsent(this, () {
+      addObserver(LifecycleObserver.onEventDestroy(
+          (owner) => _liveExtDataCache.remove(owner.lifecycle)?._data.clear()));
+      return LifecycleExtData();
+    });
+  }
+}
+
+extension LifecycleRegistryTypedDataExt on LifecycleObserverRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'Must be used before destroyed.');
-    return _liveExtDataCache.putIfAbsent(lifecycle, () {
-      lifecycle.addObserver(LifecycleObserver.onEventDestroy(
-          (owner) => _liveExtDataCache.remove(owner.lifecycle)?._data.clear()));
-      return LifecycleExtData();
-    });
+    return lifecycle.lifecycleExtData;
   }
 }

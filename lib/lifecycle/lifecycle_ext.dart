@@ -63,9 +63,19 @@ final Map<LifecycleObserverRegistry, _CacheMapObserver> _map = {};
 class _CacheMapObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
   final LifecycleObserverRegistry registryMixin;
+  final Set<Cancellable> _liveCancellable = {};
 
-  Cancellable _makeCancellableForLive({Cancellable? other}) =>
-      _cancellable.makeCancellable(infectious: false, father: other);
+  Cancellable _makeCancellableForLive({Cancellable? other}) {
+    final cancellable =
+        _cancellable.makeCancellable(infectious: false, father: other);
+
+    if (cancellable.isAvailable) {
+      cancellable.whenCancel.then((_) => _liveCancellable.remove(cancellable));
+      _liveCancellable.add(cancellable);
+    }
+
+    return cancellable;
+  }
 
   _CacheMapObserver(this.registryMixin) : _cancellable = Cancellable() {
     registryMixin.addLifecycleObserver(this, fullCycle: true);
@@ -76,6 +86,7 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
   void onDestroy(LifecycleOwner owner) {
     super.onDestroy(owner);
     _cancellable.cancel();
+    _liveCancellable.clear();
   }
 }
 

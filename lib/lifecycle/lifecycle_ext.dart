@@ -79,7 +79,7 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
 
   _CacheMapObserver(this.registryMixin) : _cancellable = Cancellable() {
     registryMixin.addLifecycleObserver(this, fullCycle: true);
-    _cancellable.onCancel.then((value) => _map.remove(this));
+    _cancellable.onCancel.then((value) => _map.remove(registryMixin));
   }
 
   @override

@@ -1,6 +1,7 @@
 ## 0.0.7
 
 * Continue to expand the launch series
+* Fix reference exception caused by makeLiveCancellable
 
 ## 0.0.6
 

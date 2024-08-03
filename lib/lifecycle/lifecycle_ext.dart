@@ -70,7 +70,9 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
         _cancellable.makeCancellable(infectious: false, father: other);
 
     if (cancellable.isAvailable) {
-      cancellable.whenCancel.then((_) => _liveCancellable.remove(cancellable));
+      cancellable.whenCancel
+          .bindCancellable(_cancellable)
+          .then((_) => _liveCancellable.remove(cancellable));
       _liveCancellable.add(cancellable);
     }
 

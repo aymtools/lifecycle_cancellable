@@ -53,7 +53,7 @@ extension LifecycleTypedDataExt on Lifecycle {
   }
 }
 
-extension LifecycleRegistryTypedDataExt on LifecycleObserverRegistry {
+extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
     assert(currentLifecycleState > LifecycleState.destroyed,

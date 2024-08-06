@@ -36,10 +36,12 @@ extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
           ? Future.value(currentLifecycleState)
           : nextLifecycleState(state);
 
+  @Deprecated('use [launchWhenLifecycleStateStarted]')
   Future<LifecycleEvent> whenFirstStart() =>
       whenMoreThanState(LifecycleState.started)
           .then((value) => LifecycleEvent.start);
 
+  @Deprecated('use [launchWhenLifecycleStateResumed]')
   Future<LifecycleEvent> whenFirstResume() =>
       whenMoreThanState(LifecycleState.resumed)
           .then((value) => LifecycleEvent.resume);
@@ -47,9 +49,11 @@ extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
 
 extension LifecycleObserverRegistryMixinContextExt
     on LifecycleObserverRegistryMixin {
+  @Deprecated('Will be removed')
   Future<BuildContext> get requiredContext =>
       whenMoreThanState(LifecycleState.started).then((_) => context);
 
+  @Deprecated('Will be removed')
   Future<S> requiredState<S extends State>() => requiredContext.then((value) {
         if (value is StatefulElement && value.state is S) {
           return value.state as S;
@@ -58,11 +62,10 @@ extension LifecycleObserverRegistryMixinContextExt
       });
 }
 
-final Map<LifecycleObserverRegistry, _CacheMapObserver> _map = {};
+final Map<ILifecycle, _CacheMapObserver> _map = {};
 
 class _CacheMapObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
-  final LifecycleObserverRegistry registryMixin;
   final Set<Cancellable> _liveCancellable = {};
 
   Cancellable _makeCancellableForLive({Cancellable? other}) {
@@ -79,9 +82,15 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
     return cancellable;
   }
 
-  _CacheMapObserver(this.registryMixin) : _cancellable = Cancellable() {
-    registryMixin.addLifecycleObserver(this, fullCycle: true);
-    _cancellable.onCancel.then((value) => _map.remove(registryMixin));
+  _CacheMapObserver(ILifecycle lifecycle) : _cancellable = Cancellable() {
+    if (lifecycle is LifecycleOwner) {
+      final l = lifecycle.lifecycle;
+      l.addLifecycleObserver(this, fullCycle: true);
+      _cancellable.onCancel.then((value) => _map.remove(l));
+    } else {
+      lifecycle.addLifecycleObserver(this, fullCycle: true);
+      _cancellable.onCancel.then((value) => _map.remove(lifecycle));
+    }
   }
 
   @override
@@ -92,7 +101,7 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
   }
 }
 
-extension LifecycleObserverRegistryCacnellable on LifecycleObserverRegistry {
+extension LifecycleObserverRegistryCacnellable on ILifecycle {
   /// 构建一个绑定到lifecycle的Cancellable
   Cancellable makeLiveCancellable({Cancellable? other}) {
     assert(currentLifecycleState > LifecycleState.destroyed,

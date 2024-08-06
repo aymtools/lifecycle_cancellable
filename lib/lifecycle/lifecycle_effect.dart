@@ -10,7 +10,7 @@ typedef Launcher<T> = FutureOr Function(T data);
 class _LauncherLifecycleObserver<T>
     with LifecycleStateChangeObserver, LifecycleEventObserver {
   final T _data;
-  LifecycleObserverRegistry? _registry;
+  LifecycleRegistryState? _registry;
 
   Launcher<T>? launchOnFirstCreate;
   Launcher<T>? launchOnFirstStart;
@@ -18,8 +18,7 @@ class _LauncherLifecycleObserver<T>
   Launcher<T>? launchOnDestroy;
   Map<LifecycleState, Launcher<T>> _repeatOn = {};
 
-  _LauncherLifecycleObserver(
-      this._data, LifecycleObserverRegistry this._registry);
+  _LauncherLifecycleObserver(this._data, this._registry);
 
   bool _firstCreate = true, _firstStart = true, _firstResume = true;
 
@@ -93,7 +92,7 @@ class _LauncherLifecycleObserver<T>
       //执行转移将当前的observer转移到lifecycle上 使销毁的时机绑定在lifecycle上
       _registry?.removeLifecycleObserver(this, fullCycle: false);
       _registry = null;
-      owner.lifecycle.addObserver(this, state);
+      owner.lifecycle.addLifecycleObserver(this, startWith: state);
     }
   }
 
@@ -111,7 +110,7 @@ class _LauncherLifecycleObserver<T>
 
 const _withLifecycleEffectToken = Object();
 
-extension LifecycleLauncherExt on LifecycleObserverRegistry {
+extension LifecycleLauncherExt on ILifecycle {
   /// 直接使用生命周期对类对象进行操作
   T withLifecycleEffect<T extends Object>({
     T? data,
@@ -145,15 +144,29 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
       return value;
     }
 
+    Lifecycle life;
+    if (this is Lifecycle) {
+      life = this as Lifecycle;
+    } else if (this is ILifecycleRegistry) {
+      life = (this as LifecycleOwner).lifecycle;
+    } else {
+      // 不应该进入此分支
+      throw '';
+    }
+
     Map<Object, _LauncherLifecycleObserver> _lifecycleEffectObservers =
-        lifecycleExtData.putIfAbsent(
+        life.lifecycleExtData.putIfAbsent(
             TypedKey<Map<Object, _LauncherLifecycleObserver>>(
                 _withLifecycleEffectToken),
             () => weak.WeakMap());
 
     _LauncherLifecycleObserver<T> observer =
         _lifecycleEffectObservers.putIfAbsent(value as Object, () {
-      final o = _LauncherLifecycleObserver<T>(value, this);
+      final o = _LauncherLifecycleObserver<T>(
+          value,
+          this is LifecycleRegistryState
+              ? this as LifecycleRegistryState
+              : null);
       o.launchOnFirstCreate = launchOnFirstCreate;
       o.launchOnFirstStart = launchOnFirstStart;
       o.launchOnFirstResume = launchOnFirstResume;
@@ -165,10 +178,10 @@ extension LifecycleLauncherExt on LifecycleObserverRegistry {
         o._repeatOn[LifecycleState.resumed] = repeatOnResumed;
 
       //加入销毁的逻辑
-      lifecycle.addObserver(LifecycleObserver.eventDestroy(
+      life.addLifecycleObserver(LifecycleObserver.eventDestroy(
           () => _lifecycleEffectObservers.remove(value)));
 
-      addLifecycleObserver(o, fullCycle: true);
+      life.addLifecycleObserver(o);
       return o;
     }) as _LauncherLifecycleObserver<T>;
 

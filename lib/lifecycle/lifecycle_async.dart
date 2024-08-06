@@ -7,7 +7,7 @@ import 'package:cancellable/cancellable.dart';
 extension StreamLifecycleExt<T> on Stream<T> {
   /// 将Stream关联到lifecycle
   /// [repeatLastOnRestart] 是指当从新进入到状态时，是否发射之前的数据
-  Stream<T> bindLifecycle(LifecycleObserverRegistry registry,
+  Stream<T> bindLifecycle(ILifecycle lifecycle,
       {LifecycleState state = LifecycleState.started,
       bool repeatLastOnRestart = false,
       bool closeWhenCancel = false,
@@ -28,7 +28,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
     handleError(Object error, StackTrace stackTrace, EventSink<T> sink) {
       if (isClose) return;
       if (cancelOnError == true && cacheError != null) return;
-      if (registry.currentLifecycleState >= state) {
+      if (lifecycle.currentLifecycleState >= state) {
         cleanCache.call();
         sink.addError(error, stackTrace);
       } else {
@@ -55,7 +55,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
           if (cancelOnError == true && cacheError != null) return;
           cleanCache.call();
           if (!isClose) {
-            if (registry.currentLifecycleState >= state) {
+            if (lifecycle.currentLifecycleState >= state) {
               sink.add(data);
             } else {
               cache = data;
@@ -65,7 +65,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
         },
         handleError: handleError,
       );
-      registry.repeatOnLifecycle(
+      lifecycle.repeatOnLifecycle(
           targetState: state,
           block: (_) {
             if (!isClose && cacheError != null && cacheErrorSink != null) {
@@ -84,13 +84,13 @@ extension StreamLifecycleExt<T> on Stream<T> {
         handleData: (data, sink) {
           if (cancelOnError == true && cacheError != null) return;
           cleanCache.call();
-          if (!isClose && registry.currentLifecycleState >= state) {
+          if (!isClose && lifecycle.currentLifecycleState >= state) {
             sink.add(data);
           }
         },
         handleError: handleError,
       );
-      registry.repeatOnLifecycle(
+      lifecycle.repeatOnLifecycle(
           targetState: state,
           block: (_) {
             if (!isClose && cacheError != null && cacheErrorSink != null) {
@@ -104,7 +104,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
           });
     }
 
-    return bindCancellable(registry.makeLiveCancellable(),
+    return bindCancellable(lifecycle.makeLiveCancellable(),
             closeWhenCancel: closeWhenCancel)
         .transform(transformer);
   }
@@ -112,8 +112,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
 
 extension FutureLifecycleExt<T> on Future<T> {
   /// 将future关联到lifecycle
-  Future<T> bindLifecycle(LifecycleObserverRegistry registry,
-      {bool throwWhenCancel = false}) {
+  Future<T> bindLifecycle(ILifecycle registry, {bool throwWhenCancel = false}) {
     return bindCancellable(registry.makeLiveCancellable(),
         throwWhenCancel: throwWhenCancel);
   }

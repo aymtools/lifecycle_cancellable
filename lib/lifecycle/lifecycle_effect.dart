@@ -144,15 +144,7 @@ extension LifecycleLauncherExt on ILifecycle {
       return value;
     }
 
-    Lifecycle life;
-    if (this is Lifecycle) {
-      life = this as Lifecycle;
-    } else if (this is ILifecycleRegistry) {
-      life = (this as LifecycleOwner).lifecycle;
-    } else {
-      // 不应该进入此分支
-      throw '';
-    }
+    Lifecycle life = toLifecycle();
 
     Map<Object, _LauncherLifecycleObserver> _lifecycleEffectObservers =
         life.lifecycleExtData.putIfAbsent(

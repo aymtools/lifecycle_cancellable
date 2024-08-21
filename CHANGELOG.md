@@ -1,3 +1,7 @@
+## 1.0.1
+
+* After upgrading lifecycle to 3.0, some assertions are abnormal
+
 ## 1.0.0
 
 * Lifecycle upgraded to 3.0.0

@@ -43,8 +43,8 @@ final Map<Lifecycle, LifecycleExtData> _liveExtDataCache = weak.WeakMap();
 extension LifecycleTypedDataExt on Lifecycle {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
-    assert(currentState > LifecycleState.destroyed,
-        'Must be used before destroyed.');
+    assert(currentLifecycleState > LifecycleState.destroyed,
+        'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
     return _liveExtDataCache.putIfAbsent(this, () {
       addObserver(LifecycleObserver.onEventDestroy(
           (owner) => _liveExtDataCache.remove(owner.lifecycle)?._data.clear()));
@@ -56,8 +56,16 @@ extension LifecycleTypedDataExt on Lifecycle {
 extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   LifecycleExtData get lifecycleExtData {
-    assert(currentLifecycleState > LifecycleState.destroyed,
-        'Must be used before destroyed.');
+    assert(() {
+      if (this is LifecycleRegistryState) {
+        assert(currentLifecycleState > LifecycleState.initialized,
+            'In LifecycleRegistryState, the currentLifecycleState must be greater than LifecycleState.initialized');
+      } else {
+        assert(currentLifecycleState > LifecycleState.destroyed,
+            'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
+      }
+      return true;
+    }());
     return lifecycle.lifecycleExtData;
   }
 }

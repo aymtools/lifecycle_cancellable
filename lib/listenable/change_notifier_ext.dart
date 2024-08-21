@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:anlifecycle/lifecycle.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/widgets.dart';
 
@@ -75,8 +76,15 @@ extension ChangeNotifierCancellable on ChangeNotifier {
 }
 
 extension ChangeNotifierCancellableV2<T extends ChangeNotifier> on T {
+  /// 与Cancellable关联 当Cancellable cancel时调用dispose
   T bindCancellable(Cancellable cancellable) {
     cancellable.onCancel.then((_) => dispose());
+    return this;
+  }
+
+  /// 与lifecycle关联 当lifecycle destroy时调用dispose
+  T bindLifecycle(ILifecycle lifecycle) {
+    lifecycle.addLifecycleObserver(LifecycleObserver.eventDestroy(dispose));
     return this;
   }
 }

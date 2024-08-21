@@ -10,7 +10,6 @@ typedef Launcher<T> = FutureOr Function(T data);
 class _LauncherLifecycleObserver<T>
     with LifecycleStateChangeObserver, LifecycleEventObserver {
   final T _data;
-  LifecycleRegistryState? _registry;
 
   Launcher<T>? launchOnFirstCreate;
   Launcher<T>? launchOnFirstStart;
@@ -18,7 +17,7 @@ class _LauncherLifecycleObserver<T>
   Launcher<T>? launchOnDestroy;
   Map<LifecycleState, Launcher<T>> _repeatOn = {};
 
-  _LauncherLifecycleObserver(this._data, this._registry);
+  _LauncherLifecycleObserver(this._data);
 
   bool _firstCreate = true, _firstStart = true, _firstResume = true;
 
@@ -86,14 +85,6 @@ class _LauncherLifecycleObserver<T>
       }
     }
     _lastState = state;
-    if (_registry != null &&
-        _registry!.currentLifecycleState > LifecycleState.initialized &&
-        owner.lifecycle.currentState == state) {
-      //执行转移将当前的observer转移到lifecycle上 使销毁的时机绑定在lifecycle上
-      _registry?.removeLifecycleObserver(this, fullCycle: false);
-      _registry = null;
-      owner.lifecycle.addLifecycleObserver(this, startWith: state);
-    }
   }
 
   _dRunOnResume(LifecycleOwner owner) {
@@ -122,10 +113,19 @@ extension LifecycleLauncherExt on ILifecycle {
     Launcher<T>? repeatOnResumed,
     Launcher<T>? launchOnDestroy,
   }) {
-    assert(currentLifecycleState > LifecycleState.destroyed,
-        'Must be used before destroyed.');
+    assert(() {
+      if (this is LifecycleRegistryState) {
+        assert(currentLifecycleState > LifecycleState.initialized,
+            'In LifecycleRegistryState, the currentLifecycleState must be greater than LifecycleState.initialized');
+      } else {
+        assert(currentLifecycleState > LifecycleState.destroyed,
+            'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
+      }
+      return true;
+    }());
+
     if (currentLifecycleState <= LifecycleState.destroyed) {
-      throw 'Must be used before destroyed.';
+      throw 'The currentLifecycleState state must be greater than LifecycleState.destroyed.';
     }
     assert(data != null || factory != null,
         'data and factory cannot be null at the same time');
@@ -154,11 +154,7 @@ extension LifecycleLauncherExt on ILifecycle {
 
     _LauncherLifecycleObserver<T> observer =
         _lifecycleEffectObservers.putIfAbsent(value as Object, () {
-      final o = _LauncherLifecycleObserver<T>(
-          value,
-          this is LifecycleRegistryState
-              ? this as LifecycleRegistryState
-              : null);
+      final o = _LauncherLifecycleObserver<T>(value);
       o.launchOnFirstCreate = launchOnFirstCreate;
       o.launchOnFirstStart = launchOnFirstStart;
       o.launchOnFirstResume = launchOnFirstResume;

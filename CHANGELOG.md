@@ -1,3 +1,7 @@
+## 1.0.2
+
+* The newly added findLifecycleOwner can be used to search upward for the specified LifecycleOwner.
+
 ## 1.0.1
 
 * After upgrading lifecycle to 3.0, some assertions are abnormal

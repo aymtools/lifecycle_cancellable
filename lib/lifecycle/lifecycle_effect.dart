@@ -133,8 +133,6 @@ extension LifecycleLauncherExt on ILifecycle {
       throw 'data and factory cannot be null at the same time';
     }
     T value = data ?? factory!.call();
-    assert(
-        value != null, 'Unable to register LifecycleEffect with null as key');
     if (launchOnFirstCreate == null &&
         launchOnFirstStart == null &&
         launchOnFirstResume == null &&
@@ -160,10 +158,12 @@ extension LifecycleLauncherExt on ILifecycle {
       o.launchOnFirstResume = launchOnFirstResume;
       o.launchOnDestroy = launchOnDestroy;
 
-      if (repeatOnStarted != null)
+      if (repeatOnStarted != null) {
         o._repeatOn[LifecycleState.started] = repeatOnStarted;
-      if (repeatOnResumed != null)
+      }
+      if (repeatOnResumed != null) {
         o._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+      }
 
       //加入销毁的逻辑
       life.addLifecycleObserver(LifecycleObserver.eventDestroy(

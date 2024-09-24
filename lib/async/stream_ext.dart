@@ -1,6 +1,7 @@
 import 'dart:async';
 
 extension StreamDoneTimeoutExt<T> on Stream<T> {
+  /// 设定stream 的 done 超时
   Stream<T> timeoutDone(Duration duration,
       {void Function(StreamSink<T> sink)? onTimeout}) {
     StreamController<T> controller =

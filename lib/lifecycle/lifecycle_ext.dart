@@ -435,3 +435,26 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     return completer.future;
   }
 }
+
+extension LifecycleFinderExt on ILifecycle {
+  /// 从当前环境中向上寻找特定的 LifecycleOwner
+  LO? findLifecycleOwner<LO extends LifecycleOwner>({bool Function(LO)? test}) {
+    Lifecycle? life = toLifecycle();
+    if (test == null) {
+      while (life != null) {
+        if (life.owner is LO) {
+          return (life.owner as LO);
+        }
+        life = life.parent;
+      }
+      return null;
+    }
+    while (life != null) {
+      if (life.owner is LO && test((life.owner as LO))) {
+        return (life.owner as LO);
+      }
+      life = life.parent;
+    }
+    return null;
+  }
+}

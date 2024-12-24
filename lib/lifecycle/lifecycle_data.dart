@@ -1,5 +1,5 @@
 import 'package:anlifecycle/anlifecycle.dart';
-import 'package:weak_collections/weak_collections.dart' as weak;
+import 'package:weak_collections/weak_collections.dart';
 
 class TypedKey<T> {
   final Object? key;
@@ -38,11 +38,15 @@ class LifecycleExtData {
   T? remove<T>(TypedKey<T> key) => _data.remove(key) as T?;
 }
 
-final Map<Lifecycle, LifecycleExtData> _liveExtDataCache = weak.WeakMap();
+final Map<Lifecycle, LifecycleExtData> _liveExtDataCache = WeakHashMap();
 
 extension LifecycleTypedDataExt on Lifecycle {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
-  LifecycleExtData get lifecycleExtData {
+  @Deprecated('use extData')
+  LifecycleExtData get lifecycleExtData => extData;
+
+  /// 获取lifecycle管理的扩展数据 于destroy时自动清理
+  LifecycleExtData get extData {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
     return _liveExtDataCache.putIfAbsent(this, () {
@@ -53,9 +57,16 @@ extension LifecycleTypedDataExt on Lifecycle {
   }
 }
 
+final Map<ILifecycleRegistry, LifecycleExtData> _liveRegistryExtDataCache =
+    WeakHashMap();
+
 extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
-  LifecycleExtData get lifecycleExtData {
+  @Deprecated('use extData')
+  LifecycleExtData get lifecycleExtData => extData;
+
+  /// 获取lifecycle管理的扩展数据 于destroy时自动清理
+  LifecycleExtData get extData {
     assert(() {
       if (this is LifecycleRegistryState) {
         assert(currentLifecycleState > LifecycleState.initialized,
@@ -66,6 +77,17 @@ extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
       }
       return true;
     }());
-    return lifecycle.lifecycleExtData;
+    return lifecycle.extData;
+  }
+
+  /// 获取 LifecycleRegistry 管理的扩展数据 于destroy时自动清理
+  LifecycleExtData get extDataForRegistry {
+    assert(currentLifecycleState > LifecycleState.destroyed,
+        'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
+    return _liveRegistryExtDataCache.putIfAbsent(this, () {
+      addLifecycleObserver(LifecycleObserver.onEventDestroy(
+          (owner) => _liveRegistryExtDataCache.remove(this)?._data.clear()));
+      return LifecycleExtData();
+    });
   }
 }

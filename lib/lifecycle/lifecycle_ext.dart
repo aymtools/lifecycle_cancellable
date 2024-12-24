@@ -29,6 +29,7 @@ abstract class _LifecycleEventObserverWrapper
   void onStop(LifecycleOwner owner) {}
 }
 
+@Deprecated('Will be removed')
 extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
   @Deprecated('use [launchWhenLifecycleStateAtLeast]')
   Future<LifecycleState> whenMoreThanState(LifecycleState state) =>
@@ -47,6 +48,7 @@ extension LifecycleObserverRegistryX on LifecycleObserverRegistry {
           .then((value) => LifecycleEvent.resume);
 }
 
+@Deprecated('Will be removed')
 extension LifecycleObserverRegistryMixinContextExt
     on LifecycleObserverRegistryMixin {
   @Deprecated('Will be removed')

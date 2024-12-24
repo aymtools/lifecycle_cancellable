@@ -3,7 +3,8 @@ import 'dart:async';
 extension StreamDoneTimeoutExt<T> on Stream<T> {
   /// 设定stream 的 done 超时
   Stream<T> timeoutDone(Duration duration,
-      {void Function(StreamSink<T> sink)? onTimeout}) {
+      {void Function(StreamSink<T> sink)? onTimeout,
+      bool? cancelOnError = true}) {
     StreamController<T> controller =
         isBroadcast ? StreamController.broadcast() : StreamController();
     Timer? time;
@@ -20,7 +21,7 @@ extension StreamDoneTimeoutExt<T> on Stream<T> {
         controller.add,
         onError: controller.addError,
         onDone: onDone,
-        cancelOnError: true,
+        cancelOnError: cancelOnError,
       );
       time = Timer(duration, () {
         if (!controller.isClosed) {

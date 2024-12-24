@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_data.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
-import 'package:weak_collections/weak_collections.dart' as weak;
+import 'package:weak_collections/weak_collections.dart';
 
 typedef Launcher<T> = FutureOr Function(T data);
 
@@ -145,10 +145,10 @@ extension LifecycleLauncherExt on ILifecycle {
     Lifecycle life = toLifecycle();
 
     Map<Object, _LauncherLifecycleObserver> _lifecycleEffectObservers =
-        life.lifecycleExtData.putIfAbsent(
+        life.extData.putIfAbsent(
             TypedKey<Map<Object, _LauncherLifecycleObserver>>(
                 _withLifecycleEffectToken),
-            () => weak.WeakMap());
+            () => WeakHashMap());
 
     _LauncherLifecycleObserver<T> observer =
         _lifecycleEffectObservers.putIfAbsent(value as Object, () {

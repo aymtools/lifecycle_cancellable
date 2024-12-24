@@ -1,3 +1,9 @@
+## 1.1.0
+
+* Upgrading Dependencies.
+* lifecycleExtData renamed to extData.
+* Added extDataForRegistry.
+
 ## 1.0.2
 
 * The newly added findLifecycleOwner can be used to search upward for the specified LifecycleOwner.

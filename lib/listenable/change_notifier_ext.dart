@@ -115,39 +115,31 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     sl.addListener(cancellable, l);
   }
 
-  Stream<T> asStream({Cancellable? cancellable}) {
+  Stream<T> asStream() {
     Stream<T>? result = _valueNotifierStream[this] as Stream<T>?;
     if (result == null) {
       var listeners = <MultiStreamController<T>>{};
-      result = Stream.multi((controller) {
-        if (cancellable?.isUnavailable == true) {
-          controller.close();
-          return;
+
+      void onValueChange() {
+        final ls = [...listeners];
+        for (var l in ls) {
+          l.add(value);
         }
+      }
+
+      result = Stream.multi((controller) {
+        if (listeners.isEmpty) addListener(onValueChange);
         listeners.add(controller);
         controller.add(value);
         controller.onCancel = () {
           listeners.remove(controller);
+          if (listeners.isEmpty) {
+            _valueNotifierStream[this] = null;
+            removeListener(onValueChange);
+          }
         };
       }, isBroadcast: true);
-      if (cancellable != null) {
-        cancellable.onCancel.then((value) {
-          for (var l in listeners) {
-            l.closeSync();
-          }
-        });
-        addCVListener(cancellable, (value) {
-          for (var l in listeners) {
-            l.add(value);
-          }
-        });
-      } else {
-        addListener(() {
-          for (var l in listeners) {
-            l.add(value);
-          }
-        });
-      }
+
       _valueNotifierStream[this] = result;
     }
 

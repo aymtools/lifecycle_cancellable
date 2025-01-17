@@ -15,58 +15,98 @@ class TypedKey<T> {
   }
 }
 
-/// 寄存于lifecycle的数据
-class LifecycleExtData {
-  final Map<TypedKey, Object?> _data = {};
+/// 寄存于lifecycle的数据 基类
+abstract class LifecycleExtData {
+  final Map<Object, Object?> _data = {};
 
-  /// 根据key获取，如果不存在则创建信息
-  T putIfAbsent<T>(TypedKey<T> key, T Function() ifAbsent) {
-    return _data.putIfAbsent(key, ifAbsent) as T;
+  LifecycleExtData._();
+
+  Object _genKey<T extends Object>({Object? key}) => key == null
+      ? T
+      : key is TypedKey<T>
+          ? key
+          : TypedKey<T>(key);
+
+  /// 根据Type + key获取，如果不存在则创建信息
+  T putIfAbsent<T extends Object>(
+      {Object? key, required T Function() ifAbsent}) {
+    return _data.putIfAbsent(_genKey<T>(key: key), ifAbsent) as T;
   }
 
   /// 替换为新数据  返回结构为旧数据如果不存在旧数据则返回null
-  T? replace<T>(TypedKey<T> key, T data) {
-    final last = get<T>(key);
-    _data[key] = data;
+  T? replace<T extends Object>({Object? key, required T data}) {
+    final k = _genKey<T>(key: key);
+    final last = _data[k] as T?;
+    _data[k] = data;
     return last;
   }
 
   /// 根据key获取
-  T? get<T>(TypedKey<T> key) => _data[key] as T?;
+  T? get<T extends Object>({Object? key}) => _data[_genKey<T>(key: key)] as T?;
 
   /// 手动移除指定的key
-  T? remove<T>(TypedKey<T> key) => _data.remove(key) as T?;
+  T? remove<T extends Object>({Object? key}) =>
+      _data.remove(_genKey<T>(key: key)) as T?;
 }
 
-final Map<Lifecycle, LifecycleExtData> _liveExtDataCache = WeakHashMap();
+/// 寄存于lifecycle的数据
+class LiveExtData extends LifecycleExtData {
+  final Lifecycle _lifecycle;
+
+  LiveExtData._(this._lifecycle) : super._();
+
+  /// 根据Type + key获取，如果不存在则创建信息
+  T getOrPut<T extends Object>(
+      {Object? key, required T Function(Lifecycle lifecycle) ifAbsent}) {
+    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(_lifecycle))
+        as T;
+  }
+}
+
+/// 寄存于lifecycle的数据
+class LifecycleRegistryExtData extends LifecycleExtData {
+  final ILifecycleRegistry _lifecycle;
+
+  LifecycleRegistryExtData._(this._lifecycle) : super._();
+
+  /// 根据Type + key获取，如果不存在则创建信息
+  T getOrPut<T extends Object>(
+      {Object? key,
+      required T Function(ILifecycleRegistry lifecycle) ifAbsent}) {
+    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(_lifecycle))
+        as T;
+  }
+}
+
+final Map<Lifecycle, LiveExtData> _liveExtDataCache = WeakHashMap();
 
 extension LifecycleTypedDataExt on Lifecycle {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   @Deprecated('use extData')
-  LifecycleExtData get lifecycleExtData => extData;
+  LiveExtData get lifecycleExtData => extData;
 
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
-  LifecycleExtData get extData {
+  LiveExtData get extData {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
     return _liveExtDataCache.putIfAbsent(this, () {
       addObserver(LifecycleObserver.onEventDestroy(
           (owner) => _liveExtDataCache.remove(owner.lifecycle)?._data.clear()));
-      return LifecycleExtData();
+      return LiveExtData._(this);
     });
   }
 }
 
-final Map<ILifecycleRegistry, LifecycleExtData> _liveRegistryExtDataCache =
-    WeakHashMap();
+final Map<ILifecycleRegistry, LifecycleRegistryExtData>
+    _liveRegistryExtDataCache = WeakHashMap();
 
 extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
   @Deprecated('use extData')
-  LifecycleExtData get lifecycleExtData => extData;
+  LiveExtData get lifecycleExtData => extData;
 
   /// 获取lifecycle管理的扩展数据 于destroy时自动清理
-  LifecycleExtData get extData {
+  LiveExtData get extData {
     assert(() {
       if (this is LifecycleRegistryState) {
         assert(currentLifecycleState > LifecycleState.initialized,
@@ -81,13 +121,13 @@ extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
   }
 
   /// 获取 LifecycleRegistry 管理的扩展数据 于destroy时自动清理
-  LifecycleExtData get extDataForRegistry {
+  LifecycleRegistryExtData get extDataForRegistry {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
     return _liveRegistryExtDataCache.putIfAbsent(this, () {
       addLifecycleObserver(LifecycleObserver.onEventDestroy(
           (owner) => _liveRegistryExtDataCache.remove(this)?._data.clear()));
-      return LifecycleExtData();
+      return LifecycleRegistryExtData._(this);
     });
   }
 }

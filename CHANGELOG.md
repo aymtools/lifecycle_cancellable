@@ -1,3 +1,14 @@
+## 2.0.0
+
+* Stream adds extension onData, repeatLatest.
+* BuildContext adds extensions withLifecycleEffect, withLifecycleEffectData.
+
+### Breaking Changes
+
+* LifecycleExtData is subdivided into LiveExtData and LifecycleRegistryExtData.
+* LifecycleExtData will automatically generate a Key based on the Type, and all parameters in the
+  methods will be changed to named parameters.
+
 ## 1.1.0
 
 * Upgrading Dependencies.

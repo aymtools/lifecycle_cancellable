@@ -3,6 +3,6 @@ cancelable binding of dialog, stream and lifecycle.
 
 ## Additional information
 
-See [anlifecycle](https://github.com/aymtools/lifecycle/)
+See [anlifecycle](https://pub.dev/packages/anlifecycle)
 
-See [cancelable](https://github.com/aymtools/cancelable/)
+See [cancelable](https://pub.dev/packages/cancellable)

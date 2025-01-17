@@ -5,7 +5,7 @@ import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';
 
-typedef Launcher<T> = FutureOr Function(T data);
+typedef Launcher<T> = FutureOr Function(Lifecycle, T data);
 
 class _LauncherLifecycleObserver<T>
     with LifecycleStateChangeObserver, LifecycleEventObserver {
@@ -28,7 +28,7 @@ class _LauncherLifecycleObserver<T>
     super.onCreate(owner);
     if (_firstCreate && launchOnFirstCreate != null) {
       _firstCreate = false;
-      launchOnFirstCreate!(_data);
+      launchOnFirstCreate!(owner.lifecycle, _data);
     }
   }
 
@@ -37,7 +37,7 @@ class _LauncherLifecycleObserver<T>
     super.onStart(owner);
     if (_firstStart && launchOnFirstStart != null) {
       _firstStart = false;
-      launchOnFirstStart!(_data);
+      launchOnFirstStart!(owner.lifecycle, _data);
     }
   }
 
@@ -52,7 +52,7 @@ class _LauncherLifecycleObserver<T>
   @override
   void onDestroy(LifecycleOwner owner) {
     super.onDestroy(owner);
-    launchOnDestroy?.call(_data);
+    launchOnDestroy?.call(owner.lifecycle, _data);
   }
 
   @override
@@ -61,12 +61,12 @@ class _LauncherLifecycleObserver<T>
         state == LifecycleState.created &&
         launchOnFirstCreate != null) {
       _firstCreate = false;
-      launchOnFirstCreate!(_data);
+      launchOnFirstCreate!(owner.lifecycle, _data);
     } else if (_firstStart &&
         state == LifecycleState.started &&
         launchOnFirstStart != null) {
       _firstStart = false;
-      launchOnFirstStart!(_data);
+      launchOnFirstStart!(owner.lifecycle, _data);
     } else if (_firstResume &&
         state == LifecycleState.resumed &&
         launchOnFirstResume != null) {
@@ -77,11 +77,11 @@ class _LauncherLifecycleObserver<T>
         WidgetsBinding.instance.addPostFrameCallback((_) {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
           if (owner.lifecycle.currentState >= LifecycleState.resumed) {
-            _repeatOn[LifecycleState.resumed]?.call(_data);
+            _repeatOn[LifecycleState.resumed]?.call(owner.lifecycle, _data);
           }
         });
       } else {
-        _repeatOn[state]?.call(_data);
+        _repeatOn[state]?.call(owner.lifecycle, _data);
       }
     }
     _lastState = state;
@@ -93,7 +93,7 @@ class _LauncherLifecycleObserver<T>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
       if (l.currentState > LifecycleState.destroyed) {
-        launchOnFirstResume!(_data);
+        launchOnFirstResume!(owner.lifecycle, _data);
       }
     });
   }
@@ -146,9 +146,7 @@ extension LifecycleLauncherExt on ILifecycle {
 
     Map<Object, _LauncherLifecycleObserver> _lifecycleEffectObservers =
         life.extData.putIfAbsent(
-            TypedKey<Map<Object, _LauncherLifecycleObserver>>(
-                _withLifecycleEffectToken),
-            () => WeakHashMap());
+            key: _withLifecycleEffectToken, ifAbsent: () => WeakHashMap());
 
     _LauncherLifecycleObserver<T> observer =
         _lifecycleEffectObservers.putIfAbsent(value as Object, () {
@@ -174,10 +172,12 @@ extension LifecycleLauncherExt on ILifecycle {
     }) as _LauncherLifecycleObserver<T>;
 
     observer.launchOnDestroy = launchOnDestroy;
-    if (repeatOnStarted != null)
+    if (repeatOnStarted != null) {
       observer._repeatOn[LifecycleState.started] = repeatOnStarted;
-    if (repeatOnResumed != null)
+    }
+    if (repeatOnResumed != null) {
       observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+    }
     return value;
   }
 }

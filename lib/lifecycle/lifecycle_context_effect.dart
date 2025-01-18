@@ -14,8 +14,6 @@ class _LLauncherObserver with LifecycleStateChangeObserver {
   LLauncher? launchOnFirstCreate;
   LLauncher? launchOnFirstStart;
   LLauncher? launchOnFirstResume;
-  LLauncher? repeatOnStarted;
-  LLauncher? repeatOnResumed;
   LLauncher? launchOnDestroy;
   final Map<LifecycleState, LLauncher> _repeatOn = {};
 
@@ -83,8 +81,6 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
   DLauncher<T>? launchOnFirstCreate;
   DLauncher<T>? launchOnFirstStart;
   DLauncher<T>? launchOnFirstResume;
-  DLauncher<T>? repeatOnStarted;
-  DLauncher<T>? repeatOnResumed;
   DLauncher<T>? launchOnDestroy;
   final Map<LifecycleState, DLauncher<T>> _repeatOn = {};
 
@@ -171,9 +167,14 @@ extension BuildContextLifecycleWithExt on BuildContext {
       observer.launchOnFirstCreate = launchOnFirstCreate;
       observer.launchOnFirstStart = launchOnFirstStart;
       observer.launchOnFirstResume = launchOnFirstResume;
-      observer.repeatOnStarted = repeatOnStarted;
-      observer.repeatOnResumed = repeatOnResumed;
       observer.launchOnDestroy = launchOnDestroy;
+
+      if (repeatOnStarted != null) {
+        observer._repeatOn[LifecycleState.started] = repeatOnStarted;
+      }
+      if (repeatOnResumed != null) {
+        observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+      }
 
       lifecycle.addObserver(observer);
       lifecycle.addLifecycleObserver(
@@ -181,9 +182,16 @@ extension BuildContextLifecycleWithExt on BuildContext {
       return observer;
     });
 
-    observer.repeatOnStarted = repeatOnStarted;
-    observer.repeatOnResumed = repeatOnResumed;
-    observer.launchOnDestroy = launchOnDestroy;
+    if (repeatOnStarted != null) {
+      observer._repeatOn[LifecycleState.started] = repeatOnStarted;
+    }
+    if (repeatOnResumed != null) {
+      observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+    }
+
+    if (launchOnDestroy != null) {
+      observer.launchOnDestroy = launchOnDestroy;
+    }
   }
 
   /// 从当前的Context中获取Lifecycle使用 并且data 为key
@@ -226,9 +234,13 @@ extension BuildContextLifecycleWithExt on BuildContext {
       observer.launchOnFirstCreate = launchOnFirstCreate;
       observer.launchOnFirstStart = launchOnFirstStart;
       observer.launchOnFirstResume = launchOnFirstResume;
-      observer.repeatOnStarted = repeatOnStarted;
-      observer.repeatOnResumed = repeatOnResumed;
       observer.launchOnDestroy = launchOnDestroy;
+      if (repeatOnStarted != null) {
+        observer._repeatOn[LifecycleState.started] = repeatOnStarted;
+      }
+      if (repeatOnResumed != null) {
+        observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+      }
 
       lifecycle.addObserver(observer);
       lifecycle.addLifecycleObserver(
@@ -236,10 +248,15 @@ extension BuildContextLifecycleWithExt on BuildContext {
       return observer;
     }) as _DLauncherObserver<T>;
 
-    observer.repeatOnStarted = repeatOnStarted;
-    observer.repeatOnResumed = repeatOnResumed;
-    observer.launchOnDestroy = launchOnDestroy;
-
+    if (repeatOnStarted != null) {
+      observer._repeatOn[LifecycleState.started] = repeatOnStarted;
+    }
+    if (repeatOnResumed != null) {
+      observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+    }
+    if (launchOnDestroy != null) {
+      observer.launchOnDestroy = launchOnDestroy;
+    }
     return data;
   }
 }

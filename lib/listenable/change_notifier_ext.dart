@@ -12,28 +12,31 @@ class SingleListenerManager {
   final functions = <VoidCallBack>{};
   final WeakReference<Listenable> _reference;
 
-  void callback() => functions.toSet().forEach((element) => element.call());
+  void _callback() => functions.toSet().forEach((element) => element.call());
 
   SingleListenerManager._(Listenable listenable)
       : _reference = WeakReference(listenable) {
-    listenable.addListener(callback);
+    listenable.addListener(_callback);
   }
 
   void addListener(Cancellable cancellable, VoidCallback listener) {
     if (cancellable.isUnavailable) return;
     functions.add(listener);
-    cancellable.onCancel.then(_check);
+    cancellable.onCancel.then((_) {
+      functions.remove(listener);
+      _check();
+    });
   }
 
   void removeListener(VoidCallback listener) {
     functions.remove(listener);
   }
 
-  void _check(_) {
+  void _check() {
     if (functions.isEmpty) {
       final able = _reference.target;
       if (able != null) {
-        able.removeListener(callback);
+        able.removeListener(_callback);
         _singleListener.remove(able);
       }
     }
@@ -146,29 +149,37 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     return result;
   }
 
-  @Deprecated('use [firstValue]')
+  @Deprecated('use [firstWhereValue]')
   Future<T> whenValue(bool Function(T value) test,
           {Cancellable? cancellable}) =>
       firstValue(test, cancellable: cancellable);
 
+  @Deprecated('use [firstWhereValue]')
   Future<T> firstValue(bool Function(T value) test,
+          {Cancellable? cancellable}) =>
+      firstWhereValue(test, cancellable: cancellable);
+
+  Future<T> firstWhereValue(bool Function(T value) test,
       {Cancellable? cancellable}) {
     final v = value;
     if (test(v)) {
-      return Future.value(v);
+      return Future.sync(() => v);
     }
 
-    Completer<T> completer = Completer();
+    Completer<T> completer = Completer.sync();
     if (cancellable == null || cancellable.isAvailable) {
-      Cancellable c =
-          cancellable?.makeCancellable(infectious: true) ?? Cancellable();
-      addCSingleVListener(c, (value) {
+      Cancellable c = cancellable ?? Cancellable();
+
+      void onValueChange() {
         final v = value;
         if (test(v)) {
           completer.complete(v);
           c.cancel();
         }
-      });
+      }
+
+      addListener(onValueChange);
+      c.onCancel.then((_) => removeListener(onValueChange));
     }
     return completer.future;
   }

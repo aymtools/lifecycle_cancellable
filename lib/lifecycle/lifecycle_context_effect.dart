@@ -145,6 +145,20 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
 final _withLifecycleKey = Object();
 final _withLifecycleDataKey = Object();
 
+class _BuildContextLifecycleWithDataKey {
+  final Object? key;
+
+  _BuildContextLifecycleWithDataKey({this.key});
+
+  @override
+  int get hashCode => Object.hash(_BuildContextLifecycleWithDataKey, key);
+
+  @override
+  bool operator ==(Object other) {
+    return other is _BuildContextLifecycleWithDataKey && other.key == key;
+  }
+}
+
 extension BuildContextLifecycleWithExt on BuildContext {
   /// 从当前的Context中获取Lifecycle并使用
   void withLifecycleEffect({
@@ -194,7 +208,7 @@ extension BuildContextLifecycleWithExt on BuildContext {
     }
   }
 
-  /// 从当前的Context中获取Lifecycle使用 并且data 为key
+  /// 从当前的Context中获取Lifecycle使用 并且data 同属于 key的一部分
   /// 如果使用factory 则必须保证多次调用时返回同一值 否则将会视为新建
   T withLifecycleEffectData<T extends Object>({
     T? data,
@@ -206,6 +220,7 @@ extension BuildContextLifecycleWithExt on BuildContext {
     DLauncher<T>? repeatOnStarted,
     DLauncher<T>? repeatOnResumed,
     DLauncher<T>? launchOnDestroy,
+    Object? key,
   }) {
     assert(data != null || factory != null || factory2 != null,
         'data and factory and factory2 cannot be null at the same time');
@@ -225,7 +240,10 @@ extension BuildContextLifecycleWithExt on BuildContext {
 
     final cache = lifecycle.extData
         .putIfAbsent<Map<BuildContext, Map<Object, _DLauncherObserver>>>(
-            key: _withLifecycleDataKey, ifAbsent: () => WeakHashMap());
+            key: key == null
+                ? _withLifecycleDataKey
+                : _BuildContextLifecycleWithDataKey(key: key),
+            ifAbsent: () => WeakHashMap());
 
     final cache2 =
         cache.putIfAbsent(ctx, () => HashMap<Object, _DLauncherObserver>());

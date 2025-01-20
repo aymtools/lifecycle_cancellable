@@ -99,7 +99,7 @@ extension StreamToolsExt<T> on Stream<T> {
         controller.close();
         return;
       }
-      late StreamSubscription<T> sub;
+      StreamSubscription<T>? sub;
 
       currentListeners.add(controller);
       if (currentListeners.length == 1) {
@@ -109,7 +109,9 @@ extension StreamToolsExt<T> on Stream<T> {
             listener.addSync(event);
           }
         }, onError: (Object error, StackTrace stack) {
-          handleError(error, stack);
+          if (repeatError) {
+            handleError(error, stack);
+          }
           for (var listener in [...currentListeners]) {
             listener.addErrorSync(error, stack);
           }
@@ -125,7 +127,7 @@ extension StreamToolsExt<T> on Stream<T> {
       controller.onCancel = () {
         currentListeners.remove(controller);
         if (currentListeners.isEmpty) {
-          sub.cancel();
+          sub?.cancel();
         }
       };
     }, isBroadcast: isBroadcast_);

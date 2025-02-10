@@ -50,6 +50,7 @@ extension StreamToolsExt<T> on Stream<T> {
   Stream<T> repeatLatest(
       {Duration? repeatTimeout,
       T? onTimeout,
+      T Function()? onRepeatTimeout,
       bool repeatError = false,
       bool? broadcast}) {
     var done = false;
@@ -76,18 +77,26 @@ extension StreamToolsExt<T> on Stream<T> {
 
     Timer? timer;
     if (repeatTimeout != null && repeatTimeout > Duration.zero) {
+      void Function() timeoutCallBack = () => latest = onTimeout;
+
+      if (onRepeatTimeout != null) {
+        timeoutCallBack = () => latest = onRepeatTimeout();
+      }
+
       setLatest = (value) {
         timer?.cancel();
         cleanCache();
         latest = value;
         if (!done) {
-          timer = Timer(repeatTimeout, () => latest = onTimeout);
+          timer = Timer(repeatTimeout, timeoutCallBack);
         }
       };
     }
 
     var currentListeners = <MultiStreamController<T>>{};
     final isBroadcast_ = broadcast ?? isBroadcast;
+    StreamSubscription<T>? sub;
+
     return Stream.multi((controller) {
       var latestValue = latest;
       if (latestValue != null) {
@@ -99,37 +108,28 @@ extension StreamToolsExt<T> on Stream<T> {
         controller.close();
         return;
       }
-      StreamSubscription<T>? sub;
-
       currentListeners.add(controller);
-      if (currentListeners.length == 1) {
-        sub = listen((event) {
-          setLatest(event);
-          for (var listener in [...currentListeners]) {
-            listener.addSync(event);
-          }
-        }, onError: (Object error, StackTrace stack) {
-          if (repeatError) {
-            handleError(error, stack);
-          }
-          for (var listener in [...currentListeners]) {
-            listener.addErrorSync(error, stack);
-          }
-        }, onDone: () {
-          done = true;
-          for (var listener in [...currentListeners]) {
-            listener.closeSync();
-          }
-          currentListeners.clear();
-        });
-      }
-
-      controller.onCancel = () {
-        currentListeners.remove(controller);
-        if (currentListeners.isEmpty) {
-          sub?.cancel();
+      sub ??= listen((event) {
+        setLatest(event);
+        for (var listener in [...currentListeners]) {
+          listener.addSync(event);
         }
-      };
+      }, onError: (Object error, StackTrace stack) {
+        if (repeatError) {
+          handleError(error, stack);
+        }
+        for (var listener in [...currentListeners]) {
+          listener.addErrorSync(error, stack);
+        }
+      }, onDone: () {
+        done = true;
+        for (var listener in [...currentListeners]) {
+          listener.closeSync();
+        }
+        currentListeners.clear();
+      });
+
+      controller.onCancel = () => currentListeners.remove(controller);
     }, isBroadcast: isBroadcast_);
   }
 }

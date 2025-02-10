@@ -1,3 +1,7 @@
+## 2.0.1
+
+* Fix the bug in Stream.repeatLatest.
+
 ## 2.0.0
 
 * Stream adds extension onData, repeatLatest.

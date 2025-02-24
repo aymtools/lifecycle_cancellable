@@ -106,6 +106,7 @@ extension LifecycleLauncherExt on ILifecycle {
   T withLifecycleEffect<T extends Object>({
     T? data,
     T Function()? factory,
+    T Function(Lifecycle lifecycle)? factory2,
     Launcher<T>? launchOnFirstCreate,
     Launcher<T>? launchOnFirstStart,
     Launcher<T>? launchOnFirstResume,
@@ -127,12 +128,12 @@ extension LifecycleLauncherExt on ILifecycle {
     if (currentLifecycleState <= LifecycleState.destroyed) {
       throw 'The currentLifecycleState state must be greater than LifecycleState.destroyed.';
     }
-    assert(data != null || factory != null,
+    assert(data != null || factory != null || factory2 != null,
         'data and factory cannot be null at the same time');
-    if (data == null && factory == null) {
+    if (data == null && factory == null && factory2 == null) {
       throw 'data and factory cannot be null at the same time';
     }
-    T value = data ?? factory!.call();
+    T value = data ?? factory?.call() ?? factory2!.call(toLifecycle());
     if (launchOnFirstCreate == null &&
         launchOnFirstStart == null &&
         launchOnFirstResume == null &&

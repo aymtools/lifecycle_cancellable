@@ -1,3 +1,7 @@
+## 2.0.2
+
+* LifecycleExtData adds a check to verify if it has been destroyed.
+
 ## 2.0.1
 
 * Fix the bug in Stream.repeatLatest.

@@ -146,11 +146,11 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       }
     });
     addLifecycleObserver(observer, fullCycle: true);
-    cancellable?.whenCancel
+    cancellable?.onCancel
         .then((value) => removeLifecycleObserver(observer, fullCycle: false));
   }
 
-  ///当高于某个状态时执行给定的block,并将结构收集起来为Stream
+  ///当高于某个状态时执行给定的block,并将结果收集起来为Stream
   Stream<T> collectOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
       bool runWithDelayed = false,
@@ -191,7 +191,10 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 
     addLifecycleObserver(observer, fullCycle: true);
 
-    cancellable?.whenCancel
+    controller
+      ..onCancel = () => removeLifecycleObserver(observer, fullCycle: false);
+
+    cancellable?.onCancel
         .then((value) => removeLifecycleObserver(observer, fullCycle: false));
 
     return controller.stream;
@@ -249,6 +252,9 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 
     result.whenComplete(
         () => removeLifecycleObserver(observer, fullCycle: false));
+
+    cancellable?.onCancel
+        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
     return result;
   }
 
@@ -326,6 +332,9 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     final result = completer.future;
     result.whenComplete(
         () => removeLifecycleObserver(observer, fullCycle: false));
+
+    cancellable?.onCancel
+        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
     return result;
   }
 
@@ -389,6 +398,26 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
           cancellable: cancellable,
           block: block);
 
+  Future<T> launchWhenNextLifecycleEventPause<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      launchWhenNextLifecycleEvent(
+          targetEvent: LifecycleEvent.pause,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
+  Future<T> launchWhenNextLifecycleEventStop<T>(
+          {bool runWithDelayed = false,
+          Cancellable? cancellable,
+          required FutureOr<T> Function(Cancellable cancellable) block}) =>
+      launchWhenNextLifecycleEvent(
+          targetEvent: LifecycleEvent.stop,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+
   Future<T> launchWhenLifecycleStateStarted<T>(
           {bool runWithDelayed = false,
           Cancellable? cancellable,
@@ -413,14 +442,17 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       {bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
-    Completer<T> completer = Completer.sync();
-    addLifecycleObserver(LifecycleObserver.stateChange((state) {
+    Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
+    final observer = LifecycleObserver.stateChange((state) {
       if (state == LifecycleState.destroyed &&
           !completer.isCompleted &&
           cancellable?.isUnavailable != true) {
         completer.complete(block(cancellable ?? Cancellable()));
       }
-    }));
+    });
+    addLifecycleObserver(observer);
+    cancellable?.onCancel
+        .then((_) => removeLifecycleObserver(observer, fullCycle: false));
     return completer.future;
   }
 
@@ -428,12 +460,16 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       {bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
-    Completer<T> completer = Completer.sync();
-    addLifecycleObserver(LifecycleObserver.eventDestroy(() {
+    Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
+    final observer = LifecycleObserver.eventDestroy(() {
       if (!completer.isCompleted && cancellable?.isUnavailable != true) {
         completer.complete(block(cancellable ?? Cancellable()));
       }
-    }));
+    });
+    addLifecycleObserver(observer);
+
+    cancellable?.onCancel
+        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
     return completer.future;
   }
 }

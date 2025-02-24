@@ -6,7 +6,7 @@ import 'package:cancellable/cancellable.dart';
 
 extension StreamLifecycleExt<T> on Stream<T> {
   /// 将Stream关联到lifecycle
-  /// [repeatLastOnRestart] 是指当从新进入到状态时，是否发射之前的数据
+  /// [repeatLastOnRestart] 是指当重新进入到状态时，是否发射之前的数据
   Stream<T> bindLifecycle(ILifecycle lifecycle,
       {LifecycleState state = LifecycleState.started,
       bool repeatLastOnRestart = false,

@@ -312,7 +312,7 @@ void addCSingleVListener(
 Stream<T> asStream()
 ```
 
-### 当value首次满足条件时触发， cancellable 取消时移除所有的监听
+### 当value首次满足条件时触发， cancellable 取消时取消监听
 
 ```
  Future<T> firstWhereValue(bool Function(T value) test,

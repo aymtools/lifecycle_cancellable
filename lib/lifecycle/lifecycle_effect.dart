@@ -7,15 +7,14 @@ import 'package:weak_collections/weak_collections.dart';
 
 typedef Launcher<T> = FutureOr Function(Lifecycle, T data);
 
-class _LauncherLifecycleObserver<T>
-    with LifecycleStateChangeObserver, LifecycleEventObserver {
+class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
   final T _data;
 
   Launcher<T>? launchOnFirstCreate;
   Launcher<T>? launchOnFirstStart;
   Launcher<T>? launchOnFirstResume;
   Launcher<T>? launchOnDestroy;
-  Map<LifecycleState, Launcher<T>> _repeatOn = {};
+  final Map<LifecycleState, Launcher<T>> _repeatOn = {};
 
   _LauncherLifecycleObserver(this._data);
 
@@ -24,52 +23,19 @@ class _LauncherLifecycleObserver<T>
   LifecycleState _lastState = LifecycleState.destroyed;
 
   @override
-  void onCreate(LifecycleOwner owner) {
-    super.onCreate(owner);
-    if (_firstCreate && launchOnFirstCreate != null) {
-      _firstCreate = false;
-      launchOnFirstCreate!(owner.lifecycle, _data);
-    }
-  }
-
-  @override
-  void onStart(LifecycleOwner owner) {
-    super.onStart(owner);
-    if (_firstStart && launchOnFirstStart != null) {
-      _firstStart = false;
-      launchOnFirstStart!(owner.lifecycle, _data);
-    }
-  }
-
-  @override
-  void onResume(LifecycleOwner owner) {
-    super.onResume(owner);
-    if (_firstResume && launchOnFirstResume != null) {
-      _dRunOnResume(owner);
-    }
-  }
-
-  @override
-  void onDestroy(LifecycleOwner owner) {
-    super.onDestroy(owner);
-    launchOnDestroy?.call(owner.lifecycle, _data);
-  }
-
-  @override
   void onStateChange(LifecycleOwner owner, LifecycleState state) {
-    if (_firstCreate &&
-        state == LifecycleState.created &&
-        launchOnFirstCreate != null) {
+    if (state == LifecycleState.destroyed) {
+      launchOnDestroy?.call(owner.lifecycle, _data);
+      _lastState = state;
+      return;
+    }
+    if (_firstCreate && state == LifecycleState.created) {
       _firstCreate = false;
-      launchOnFirstCreate!(owner.lifecycle, _data);
-    } else if (_firstStart &&
-        state == LifecycleState.started &&
-        launchOnFirstStart != null) {
+      launchOnFirstCreate?.call(owner.lifecycle, _data);
+    } else if (_firstStart && state == LifecycleState.started) {
       _firstStart = false;
-      launchOnFirstStart!(owner.lifecycle, _data);
-    } else if (_firstResume &&
-        state == LifecycleState.resumed &&
-        launchOnFirstResume != null) {
+      launchOnFirstStart?.call(owner.lifecycle, _data);
+    } else if (_firstResume && state == LifecycleState.resumed) {
       _dRunOnResume(owner);
     }
     if (_lastState < state) {
@@ -93,7 +59,7 @@ class _LauncherLifecycleObserver<T>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
       if (l.currentState > LifecycleState.destroyed) {
-        launchOnFirstResume!(owner.lifecycle, _data);
+        launchOnFirstResume?.call(owner.lifecycle, _data);
       }
     });
   }
@@ -145,12 +111,12 @@ extension LifecycleLauncherExt on ILifecycle {
 
     Lifecycle life = toLifecycle();
 
-    Map<Object, _LauncherLifecycleObserver> _lifecycleEffectObservers =
+    Map<Object, _LauncherLifecycleObserver> lifecycleEffectObservers =
         life.extData.putIfAbsent(
             key: _withLifecycleEffectToken, ifAbsent: () => WeakHashMap());
 
     _LauncherLifecycleObserver<T> observer =
-        _lifecycleEffectObservers.putIfAbsent(value as Object, () {
+        lifecycleEffectObservers.putIfAbsent(value as Object, () {
       final o = _LauncherLifecycleObserver<T>(value);
       o.launchOnFirstCreate = launchOnFirstCreate;
       o.launchOnFirstStart = launchOnFirstStart;
@@ -166,7 +132,7 @@ extension LifecycleLauncherExt on ILifecycle {
 
       //加入销毁的逻辑
       life.addLifecycleObserver(LifecycleObserver.eventDestroy(
-          () => _lifecycleEffectObservers.remove(value)));
+          () => lifecycleEffectObservers.remove(value)));
 
       life.addLifecycleObserver(o);
       return o;

@@ -1,3 +1,10 @@
+## 2.1.0
+
+* Refine the timing checks for the withLifecycle launch methods.
+* BuildContext.withLifecycleEffectData will be renamed to BuildContext.withLifecycleAndDataEffect.
+* ILifecycle adds a new tickerProvider extension.
+* BuildContext adds new extensions: withLifecycleExtData and withLifecycleAndExtDataEffect.
+
 ## 2.0.2
 
 * LifecycleExtData adds a check to verify if it has been destroyed.

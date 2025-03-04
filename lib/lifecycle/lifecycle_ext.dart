@@ -192,7 +192,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     addLifecycleObserver(observer, fullCycle: true);
 
     controller
-      ..onCancel = () => removeLifecycleObserver(observer, fullCycle: false);
+      .onCancel = () => removeLifecycleObserver(observer, fullCycle: false);
 
     cancellable?.onCancel
         .then((value) => removeLifecycleObserver(observer, fullCycle: false));

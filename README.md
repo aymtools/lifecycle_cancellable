@@ -68,7 +68,7 @@ Future<T> launchWhenLifecycleEventDestroy<T>(
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block})
       
-  Future<T> launchWhenNextLifecycleEventStart<T>(
+  Future<T> launchWhenLifecycleStateStarted<T>(
           {bool runWithDelayed = false,
           Cancellable? cancellable,
           required FutureOr<T> Function(Cancellable cancellable) block})
@@ -251,7 +251,7 @@ void withLifecycleEffect({
 ```
 typedef DLauncher<T> = void Function(Lifecycle lifecycle, T data);
 
-T withLifecycleEffectData<T extends Object>({
+T withLifecycleAndDataEffect<T extends Object>({
     T? data,
     T Function()? factory,
     T Function(Lifecycle lifecycle)? factory2,

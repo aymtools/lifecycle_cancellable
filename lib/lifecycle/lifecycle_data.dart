@@ -79,6 +79,7 @@ class LiveExtData extends LifecycleExtData {
         as T;
   }
 
+  @override
   void _destroy() {
     super._destroy();
     _lifecycle = null;
@@ -102,6 +103,7 @@ class LifecycleRegistryExtData extends LifecycleExtData {
         as T;
   }
 
+  @override
   void _destroy() {
     super._destroy();
     _lifecycle = null;

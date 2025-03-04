@@ -1,3 +1,4 @@
+import 'package:an_lifecycle_cancellable/key/key.dart';
 import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_context_effect.dart';
 import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_data.dart';
 import 'package:anlifecycle/anlifecycle.dart';
@@ -124,30 +125,55 @@ extension BuildContextLifecycleWithControllerExt on BuildContext {
           length: length,
           vsync: l.tickerProvider,
         ),
-        key: _TabControllerKey(initialIndex, animationDuration, length, key),
+        key: FlexibleKey(
+            TabController, initialIndex, animationDuration, length, key),
       );
-}
 
-class _TabControllerKey {
-  final int initialIndex;
+  /// 动画控制器
+  AnimationController withLifecycleAnimationController({
+    double? value,
+    Duration? duration,
+    Duration? reverseDuration,
+    String? debugLabel,
+    double lowerBound = 0.0,
+    double upperBound = 1.0,
+    AnimationBehavior animationBehavior = AnimationBehavior.normal,
+    Object? key,
+  }) {
+    return withLifecycleExtData<AnimationController>(
+        factory2: (l) => AnimationController(
+              value: value,
+              duration: duration,
+              reverseDuration: reverseDuration,
+              debugLabel: debugLabel,
+              lowerBound: lowerBound,
+              upperBound: upperBound,
+              animationBehavior: animationBehavior,
+              vsync: l.tickerProvider,
+            ),
+        key: FlexibleKey(AnimationController, value, duration, reverseDuration,
+            lowerBound, upperBound, animationBehavior, key));
+  }
 
-  final Duration? animationDuration;
-  final int length;
-  final Object? key;
-
-  _TabControllerKey(
-      this.initialIndex, this.animationDuration, this.length, this.key);
-
-  @override
-  int get hashCode => Object.hash(initialIndex, animationDuration, length, key);
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is _TabControllerKey &&
-        other.initialIndex == initialIndex &&
-        other.animationDuration == animationDuration &&
-        other.length == length &&
-        other.key == key;
+  /// 动画控制器
+  AnimationController withLifecycleAnimationControllerUnbounded({
+    double value = 0.0,
+    Duration? duration,
+    Duration? reverseDuration,
+    String? debugLabel,
+    AnimationBehavior animationBehavior = AnimationBehavior.normal,
+    Object? key,
+  }) {
+    return withLifecycleExtData<AnimationController>(
+        factory2: (l) => AnimationController.unbounded(
+              value: value,
+              duration: duration,
+              reverseDuration: reverseDuration,
+              debugLabel: debugLabel,
+              animationBehavior: animationBehavior,
+              vsync: l.tickerProvider,
+            ),
+        key: FlexibleKey(AnimationController, 'Unbounded', value, duration,
+            reverseDuration, animationBehavior, key));
   }
 }

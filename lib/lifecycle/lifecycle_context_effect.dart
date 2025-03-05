@@ -216,62 +216,76 @@ extension BuildContextLifecycleWithExt on BuildContext {
     DLauncher<T>? repeatOnResumed,
     DLauncher<T>? launchOnDestroy,
     Object? key,
-  }) {
-    assert(data != null || factory != null || factory2 != null,
-        'data and factory and factory2 cannot be null at the same time');
+  }) =>
+      withLifecycleAndDataEffect(
+        data: data,
+        factory: factory,
+        factory2: factory2,
+        launchOnFirstCreate: launchOnFirstCreate,
+        launchOnFirstStart: launchOnFirstStart,
+        launchOnFirstResume: launchOnFirstResume,
+        repeatOnStarted: repeatOnStarted,
+        repeatOnResumed: repeatOnResumed,
+        launchOnDestroy: launchOnDestroy,
+        key: key,
+      );
 
-    data ??= factory?.call();
-
-    final lifecycle = Lifecycle.of(this);
-
-    data ??= factory2?.call(lifecycle);
-
-    if (data == null) {
-      throw 'data and factory and factory2 cannot be null at the same time';
-    }
-
-    final ctx = this;
-    final d = data;
-
-    final cache = lifecycle.extData
-        .putIfAbsent<Map<BuildContext, Map<Object, _DLauncherObserver>>>(
-            key: key == null
-                ? _withLifecycleDataKey
-                : _BuildContextLifecycleWithDataKey(key: key),
-            ifAbsent: () => WeakHashMap());
-
-    final cache2 =
-        cache.putIfAbsent(ctx, () => HashMap<Object, _DLauncherObserver>());
-    final observer = cache2.putIfAbsent(d, () {
-      final observer = _DLauncherObserver<T>._(ctx, d);
-      observer.launchOnFirstCreate = launchOnFirstCreate;
-      observer.launchOnFirstStart = launchOnFirstStart;
-      observer.launchOnFirstResume = launchOnFirstResume;
-      observer.launchOnDestroy = launchOnDestroy;
-      if (repeatOnStarted != null) {
-        observer._repeatOn[LifecycleState.started] = repeatOnStarted;
-      }
-      if (repeatOnResumed != null) {
-        observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
-      }
-
-      lifecycle.addObserver(observer);
-      lifecycle.addLifecycleObserver(
-          LifecycleObserver.eventDestroy(() => cache2.remove(d)));
-      return observer;
-    }) as _DLauncherObserver<T>;
-
-    if (repeatOnStarted != null) {
-      observer._repeatOn[LifecycleState.started] = repeatOnStarted;
-    }
-    if (repeatOnResumed != null) {
-      observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
-    }
-    if (launchOnDestroy != null) {
-      observer.launchOnDestroy = launchOnDestroy;
-    }
-    return data;
-  }
+  // {
+  //   assert(data != null || factory != null || factory2 != null,
+  //       'data and factory and factory2 cannot be null at the same time');
+  //
+  //   data ??= factory?.call();
+  //
+  //   final lifecycle = Lifecycle.of(this);
+  //
+  //   data ??= factory2?.call(lifecycle);
+  //
+  //   if (data == null) {
+  //     throw 'data and factory and factory2 cannot be null at the same time';
+  //   }
+  //
+  //   final ctx = this;
+  //   final d = data;
+  //
+  //   final cache = lifecycle.extData
+  //       .putIfAbsent<Map<BuildContext, Map<Object, _DLauncherObserver>>>(
+  //           key: key == null
+  //               ? _withLifecycleDataKey
+  //               : _BuildContextLifecycleWithDataKey(key: key),
+  //           ifAbsent: () => WeakHashMap());
+  //
+  //   final cache2 =
+  //       cache.putIfAbsent(ctx, () => HashMap<Object, _DLauncherObserver>());
+  //   final observer = cache2.putIfAbsent(d, () {
+  //     final observer = _DLauncherObserver<T>._(ctx, d);
+  //     observer.launchOnFirstCreate = launchOnFirstCreate;
+  //     observer.launchOnFirstStart = launchOnFirstStart;
+  //     observer.launchOnFirstResume = launchOnFirstResume;
+  //     observer.launchOnDestroy = launchOnDestroy;
+  //     if (repeatOnStarted != null) {
+  //       observer._repeatOn[LifecycleState.started] = repeatOnStarted;
+  //     }
+  //     if (repeatOnResumed != null) {
+  //       observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+  //     }
+  //
+  //     lifecycle.addObserver(observer);
+  //     lifecycle.addLifecycleObserver(
+  //         LifecycleObserver.eventDestroy(() => cache2.remove(d)));
+  //     return observer;
+  //   }) as _DLauncherObserver<T>;
+  //
+  //   if (repeatOnStarted != null) {
+  //     observer._repeatOn[LifecycleState.started] = repeatOnStarted;
+  //   }
+  //   if (repeatOnResumed != null) {
+  //     observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+  //   }
+  //   if (launchOnDestroy != null) {
+  //     observer.launchOnDestroy = launchOnDestroy;
+  //   }
+  //   return data;
+  // }
 
   /// 从当前的Context中获取Lifecycle使用 并且data 同属于 key的一部分
   /// 如果使用factory 则必须保证多次调用时返回同一值 否则将会视为新建
@@ -354,11 +368,11 @@ extension BuildContextLifecycleWithExt on BuildContext {
     final lifecycle = Lifecycle.of(this);
     factory ??= () => factory2!(lifecycle);
 
-    final Map<BuildContext, Map<Object, Object?>> contextData =
+    final Map<BuildContext, Map<Object, Object?>> contextExtData =
         lifecycle.extData.putIfAbsent(
             key: _withLifecycleAndExtDataKey, ifAbsent: WeakHashMap.new);
 
-    final data = contextData.putIfAbsent(this, () {
+    final data = contextExtData.putIfAbsent(this, () {
       final result = HashMap<Object, Object?>();
 
       /// 不持有 Map，防止内存泄漏

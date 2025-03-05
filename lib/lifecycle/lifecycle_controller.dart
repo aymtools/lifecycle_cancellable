@@ -95,22 +95,22 @@ extension LifecycleTickerProviderExt on ILifecycle {
 }
 
 extension BuildContextLifecycleWithControllerExt on BuildContext {
-  /// 将对象寄生在extData中并且以当前的context为key的一部分
-  T getLifecycleExtData<T extends Object>({
-    T Function()? factory,
-    T Function(Lifecycle lifecycle)? factory2,
-    Object? key,
-  }) {
-    final lifecycle = Lifecycle.of(this);
-    final liveData = lifecycle.extData;
-    if (factory != null) {
-      return liveData.putIfAbsent(key: key, ifAbsent: factory);
-    } else if (factory2 != null) {
-      return liveData.putIfAbsent(
-          key: key, ifAbsent: () => factory2(lifecycle));
-    }
-    throw 'factory and factory2 cannot be null at the same time';
-  }
+  // /// 将对象寄生在extData中并且以当前的context为key的一部分
+  // T getLifecycleExtData<T extends Object>({
+  //   T Function()? factory,
+  //   T Function(Lifecycle lifecycle)? factory2,
+  //   Object? key,
+  // }) {
+  //   final lifecycle = Lifecycle.of(this);
+  //   final liveData = lifecycle.extData;
+  //   if (factory != null) {
+  //     return liveData.putIfAbsent(key: key, ifAbsent: factory);
+  //   } else if (factory2 != null) {
+  //     return liveData.putIfAbsent(
+  //         key: key, ifAbsent: () => factory2(lifecycle));
+  //   }
+  //   throw 'factory and factory2 cannot be null at the same time';
+  // }
 
   /// 获取可用的TabController
   TabController withLifecycleTabController({

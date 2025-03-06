@@ -5,7 +5,7 @@ import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';
 
-typedef Launcher<T> = FutureOr Function(Lifecycle, T data);
+typedef Launcher<T> = FutureOr<void> Function(Lifecycle lifecycle, T data);
 
 class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
   final T _data;
@@ -14,7 +14,9 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
   Launcher<T>? launchOnFirstStart;
   Launcher<T>? launchOnFirstResume;
   Launcher<T>? launchOnDestroy;
-  final Map<LifecycleState, Launcher<T>> _repeatOn = {};
+
+  Launcher<T>? repeatOnStarted;
+  Launcher<T>? repeatOnResumed;
 
   _LauncherLifecycleObserver(this._data);
 
@@ -25,16 +27,18 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
   @override
   void onStateChange(LifecycleOwner owner, LifecycleState state) {
     if (state == LifecycleState.destroyed) {
-      launchOnDestroy?.call(owner.lifecycle, _data);
       _lastState = state;
+      _safeCallLauncher(launchOnDestroy, owner.lifecycle, 'launchOnDestroy');
       return;
     }
     if (_firstCreate && state == LifecycleState.created) {
       _firstCreate = false;
-      launchOnFirstCreate?.call(owner.lifecycle, _data);
+      _safeCallLauncher(
+          launchOnFirstCreate, owner.lifecycle, 'launchOnFirstCreate');
     } else if (_firstStart && state == LifecycleState.started) {
       _firstStart = false;
-      launchOnFirstStart?.call(owner.lifecycle, _data);
+      _safeCallLauncher(
+          launchOnFirstStart, owner.lifecycle, 'launchOnFirstStart');
     } else if (_firstResume && state == LifecycleState.resumed) {
       _dRunOnResume(owner);
     }
@@ -43,11 +47,12 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
           if (owner.lifecycle.currentState >= LifecycleState.resumed) {
-            _repeatOn[LifecycleState.resumed]?.call(owner.lifecycle, _data);
+            _safeCallLauncher(
+                repeatOnResumed, owner.lifecycle, 'repeatOnResumed');
           }
         });
-      } else {
-        _repeatOn[state]?.call(owner.lifecycle, _data);
+      } else if (state == LifecycleState.started) {
+        _safeCallLauncher(repeatOnStarted, owner.lifecycle, 'repeatOnStarted');
       }
     }
     _lastState = state;
@@ -59,9 +64,25 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
       if (l.currentState > LifecycleState.destroyed) {
-        launchOnFirstResume?.call(owner.lifecycle, _data);
+        _safeCallLauncher(
+            launchOnFirstResume, owner.lifecycle, 'launchOnFirstResume');
       }
     });
+  }
+
+  void _safeCallLauncher(
+      Launcher<T>? launcher, Lifecycle lifecycle, String method) async {
+    if (launcher == null) return;
+    try {
+      await launcher.call(lifecycle, _data);
+    } catch (exception, stack) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: exception,
+        stack: stack,
+        library: 'an_lifecycle_cancellable',
+        context: ErrorDescription('withLifecycleEffect run $method error'),
+      ));
+    }
   }
 }
 
@@ -124,10 +145,10 @@ extension LifecycleLauncherExt on ILifecycle {
       o.launchOnDestroy = launchOnDestroy;
 
       if (repeatOnStarted != null) {
-        o._repeatOn[LifecycleState.started] = repeatOnStarted;
+        o.repeatOnStarted = repeatOnStarted;
       }
       if (repeatOnResumed != null) {
-        o._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+        o.repeatOnResumed = repeatOnResumed;
       }
 
       //加入销毁的逻辑
@@ -140,10 +161,10 @@ extension LifecycleLauncherExt on ILifecycle {
 
     observer.launchOnDestroy = launchOnDestroy;
     if (repeatOnStarted != null) {
-      observer._repeatOn[LifecycleState.started] = repeatOnStarted;
+      observer.repeatOnStarted = repeatOnStarted;
     }
     if (repeatOnResumed != null) {
-      observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
+      observer.repeatOnResumed = repeatOnResumed;
     }
     return value;
   }

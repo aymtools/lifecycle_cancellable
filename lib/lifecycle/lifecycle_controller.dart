@@ -25,9 +25,9 @@ class _LifecycleTickerProvider implements TickerProvider {
 
   _LifecycleTickerProvider(this.lifecycle) {
     _tickerModeNotifier.addListener(_updateTickers);
-    lifecycle.addLifecycleObserver(LifecycleObserver.eventDestroy(dispose));
     lifecycle.addLifecycleObserver(LifecycleObserver.stateChange((state) =>
         _tickerModeNotifier.value = state >= LifecycleState.started));
+    lifecycle.addLifecycleObserver(LifecycleObserver.eventDestroy(dispose));
   }
 
   @override

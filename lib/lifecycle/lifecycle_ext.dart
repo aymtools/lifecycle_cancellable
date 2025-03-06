@@ -116,9 +116,11 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
   }
 
   /// 当高于某个状态时执行给定的block
+  /// [ignoreBlockError]是否忽略错误 值为 false 时直接报错
   void repeatOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
       bool runWithDelayed = false,
+      bool ignoreBlockError = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     if (cancellable?.isUnavailable == true) return;
@@ -126,19 +128,29 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
           (checkable == null || checkable?.isUnavailable == true)) {
-        checkable = makeLiveCancellable(other: cancellable);
+        final able = makeLiveCancellable(other: cancellable);
+        checkable = able;
         try {
           if (runWithDelayed) {
             //转到下一个事件循环，可以过滤掉连续的状态变化
             await Future.delayed(Duration.zero);
           }
-          if (checkable!.isUnavailable) return;
-          final result = block(checkable!);
+          if (able.isUnavailable) return;
+          final result = block(able);
           if (result is Future<T>) {
             await Future.delayed(Duration.zero);
-            if (checkable?.isAvailable == true) await result;
+            if (able.isAvailable) await result;
           }
-        } catch (_) {}
+        } catch (exception, stack) {
+          if (!ignoreBlockError) {
+            FlutterError.reportError(FlutterErrorDetails(
+              exception: exception,
+              stack: stack,
+              library: 'an_lifecycle_cancellable',
+              context: ErrorDescription('repeatOnLifecycle run block error'),
+            ));
+          }
+        }
       } else if (state < targetState && checkable?.isAvailable == true) {
         checkable?.cancel();
         checkable = null;
@@ -150,9 +162,13 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
   }
 
   ///当高于某个状态时执行给定的block,并将结果收集起来为Stream
+  ///[collectBlockError] 当发生错误时将错误也收集起来,值为 false 时[ignoreBlockError]有效
+  ///[ignoreBlockError]是否忽略错误 值为 false 时直接报错
   Stream<T> collectOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
       bool runWithDelayed = false,
+      bool collectBlockError = false,
+      bool ignoreBlockError = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     if (cancellable?.isUnavailable == true) return Stream<T>.empty();
@@ -181,7 +197,18 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
           } else {
             controller.add(result);
           }
-        } catch (_) {}
+        } catch (exception, stack) {
+          if (collectBlockError) {
+            controller.addError(exception, stack);
+          } else if (!ignoreBlockError) {
+            FlutterError.reportError(FlutterErrorDetails(
+              exception: exception,
+              stack: stack,
+              library: 'an_lifecycle_cancellable',
+              context: ErrorDescription('collectOnLifecycle run block error'),
+            ));
+          }
+        }
       } else if (state < targetState && checkable?.isAvailable == true) {
         checkable?.cancel();
         checkable = null;
@@ -339,41 +366,53 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 
   void repeatOnLifecycleStarted<T>(
           {bool runWithDelayed = false,
+          bool ignoreBlockError = false,
           Cancellable? cancellable,
           required FutureOr<T> Function(Cancellable cancellable) block}) =>
       repeatOnLifecycle(
           targetState: LifecycleState.started,
           runWithDelayed: runWithDelayed,
+          ignoreBlockError: ignoreBlockError,
           cancellable: cancellable,
           block: block);
 
   void repeatOnLifecycleResumed<T>(
           {bool runWithDelayed = false,
+          bool ignoreBlockError = false,
           Cancellable? cancellable,
           required FutureOr<T> Function(Cancellable cancellable) block}) =>
       repeatOnLifecycle(
           targetState: LifecycleState.resumed,
           runWithDelayed: runWithDelayed,
+          ignoreBlockError: ignoreBlockError,
           cancellable: cancellable,
           block: block);
 
   Stream<T> collectOnLifecycleStarted<T>(
           {bool runWithDelayed = false,
+          bool collectBlockError = false,
+          bool ignoreBlockError = false,
           Cancellable? cancellable,
           required FutureOr<T> Function(Cancellable cancellable) block}) =>
       collectOnLifecycle(
           targetState: LifecycleState.started,
           runWithDelayed: runWithDelayed,
+          collectBlockError: collectBlockError,
+          ignoreBlockError: ignoreBlockError,
           cancellable: cancellable,
           block: block);
 
   Stream<T> collectOnLifecycleResumed<T>(
           {bool runWithDelayed = false,
+          bool collectBlockError = false,
+          bool ignoreBlockError = false,
           Cancellable? cancellable,
           required FutureOr<T> Function(Cancellable cancellable) block}) =>
       collectOnLifecycle(
           targetState: LifecycleState.resumed,
           runWithDelayed: runWithDelayed,
+          collectBlockError: collectBlockError,
+          ignoreBlockError: ignoreBlockError,
           cancellable: cancellable,
           block: block);
 

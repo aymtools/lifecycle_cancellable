@@ -1,3 +1,12 @@
+## 2.2.0
+
+* The repeatOnLifecycle and collectOnLifecycle functions are extended to support error handling for
+  the execution block via a new parameter called ignoreBlockError.
+  By default, ignoreBlockError is set to false, meaning any errors occurring in the block will be
+  reported using FlutterError.reportError.
+* In the extension functions withLifecycleEffect and withLifecycleAndDataEffect, if an exception
+  occurs in the execution units, FlutterError.reportError will be called.
+
 ## 2.1.0
 
 * Refine the timing checks for the withLifecycle launch methods.

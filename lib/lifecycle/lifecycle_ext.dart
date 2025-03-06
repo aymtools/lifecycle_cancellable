@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
-import 'package:cancellable/src/tools/never_exec_future.dart';
 import 'package:flutter/material.dart';
 
 abstract class _LifecycleEventObserverWrapper
@@ -191,8 +190,8 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 
     addLifecycleObserver(observer, fullCycle: true);
 
-    controller
-      .onCancel = () => removeLifecycleObserver(observer, fullCycle: false);
+    controller.onCancel =
+        () => removeLifecycleObserver(observer, fullCycle: false);
 
     cancellable?.onCancel
         .then((value) => removeLifecycleObserver(observer, fullCycle: false));
@@ -267,7 +266,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     if (runWithDelayed == true && currentLifecycleState >= targetState) {
       Cancellable checkable = makeLiveCancellable(other: cancellable);
       if (checkable.isUnavailable) {
-        return NeverExecFuture();
+        return Completer<T>().future;
       }
       var result = block(checkable);
       if (result is Future<T>) {

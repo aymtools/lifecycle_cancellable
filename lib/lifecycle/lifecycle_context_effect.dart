@@ -135,23 +135,23 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
 }
 
 final _withLifecycleKey = Object();
-final _withLifecycleDataKey = Object();
+// final _withLifecycleDataKey = Object();
 final _withLifecycleAndDataKey = Object();
 final _withLifecycleAndExtDataKey = Object();
 
-class _BuildContextLifecycleWithDataKey {
-  final Object? key;
-
-  _BuildContextLifecycleWithDataKey({this.key});
-
-  @override
-  int get hashCode => Object.hash(_BuildContextLifecycleWithDataKey, key);
-
-  @override
-  bool operator ==(Object other) {
-    return other is _BuildContextLifecycleWithDataKey && other.key == key;
-  }
-}
+// class _BuildContextLifecycleWithDataKey {
+//   final Object? key;
+//
+//   _BuildContextLifecycleWithDataKey({this.key});
+//
+//   @override
+//   int get hashCode => Object.hash(_BuildContextLifecycleWithDataKey, key);
+//
+//   @override
+//   bool operator ==(Object other) {
+//     return other is _BuildContextLifecycleWithDataKey && other.key == key;
+//   }
+// }
 
 extension BuildContextLifecycleWithExt on BuildContext {
   /// 从当前的Context中获取Lifecycle并使用

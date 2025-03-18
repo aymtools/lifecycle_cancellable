@@ -6,6 +6,9 @@
   reported using FlutterError.reportError.
 * In the extension functions withLifecycleEffect and withLifecycleAndDataEffect, if an exception
   occurs in the execution units, FlutterError.reportError will be called.
+* ILifecycle adds new extensions: whenLifecycleStateAtLeast, whenLifecycleStateXXX,
+  whenLifecycleNextEvent, whenLifecycleNextEventXXX. These methods return a Future<Cancellable>,
+  making them convenient for use in asynchronous operations.
 
 ## 2.1.0
 

@@ -510,6 +510,56 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
         .then((value) => removeLifecycleObserver(observer, fullCycle: false));
     return completer.future;
   }
+
+  Future<Cancellable> whenLifecycleStateAtLeast(LifecycleState state,
+          {bool runWithDelayed = false, Cancellable? cancellable}) =>
+      launchWhenLifecycleStateAtLeast(
+          targetState: state,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: (c) => c);
+
+  Future<Cancellable> whenLifecycleStateStarted(
+          {bool runWithDelayed = false, Cancellable? cancellable}) =>
+      whenLifecycleStateAtLeast(LifecycleState.started,
+          runWithDelayed: runWithDelayed, cancellable: cancellable);
+
+  Future<Cancellable> whenLifecycleStateResumed(
+          {bool runWithDelayed = true, Cancellable? cancellable}) =>
+      whenLifecycleStateAtLeast(LifecycleState.started,
+          runWithDelayed: runWithDelayed, cancellable: cancellable);
+
+  Future<Cancellable> whenLifecycleNextEvent(LifecycleEvent event,
+          {bool runWithDelayed = false, Cancellable? cancellable}) =>
+      launchWhenNextLifecycleEvent(
+          targetEvent: event,
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: (c) => c);
+
+  Future<Cancellable> whenLifecycleNextEventStart(
+          {bool runWithDelayed = false, Cancellable? cancellable}) =>
+      whenLifecycleNextEvent(LifecycleEvent.start,
+          runWithDelayed: runWithDelayed, cancellable: cancellable);
+
+  Future<Cancellable> whenLifecycleNextEventResume(
+          {bool runWithDelayed = true, Cancellable? cancellable}) =>
+      whenLifecycleNextEvent(LifecycleEvent.resume,
+          runWithDelayed: runWithDelayed, cancellable: cancellable);
+
+  Future<Cancellable> whenLifecycleNextEventPause(
+          {bool runWithDelayed = false, Cancellable? cancellable}) =>
+      whenLifecycleNextEvent(LifecycleEvent.pause,
+          runWithDelayed: runWithDelayed, cancellable: cancellable);
+
+  Future<Cancellable> whenLifecycleNextEventStop(
+          {bool runWithDelayed = false, Cancellable? cancellable}) =>
+      whenLifecycleNextEvent(LifecycleEvent.stop,
+          runWithDelayed: runWithDelayed, cancellable: cancellable);
+
+  Future<Cancellable> whenLifecycleDestroy({Cancellable? cancellable}) =>
+      launchWhenLifecycleEventDestroy(
+          cancellable: cancellable, block: (c) => c);
 }
 
 extension LifecycleFinderExt on ILifecycle {

@@ -100,31 +100,43 @@ extension StreamToolsExt<T> on Stream<T> {
     return Stream.multi((controller) {
       var latestValue = latest;
       if (latestValue != null) {
-        controller.add(latestValue);
+        if (!controller.isClosed) {
+          controller.add(latestValue);
+        }
       } else if (cacheError != null) {
-        controller.addError(cacheError!, cacheStackTrace);
+        if (!controller.isClosed) {
+          controller.addError(cacheError!, cacheStackTrace);
+        }
       }
       if (done) {
-        controller.close();
+        if (!controller.isClosed) {
+          controller.close();
+        }
         return;
       }
       currentListeners.add(controller);
       sub ??= listen((event) {
         setLatest(event);
         for (var listener in [...currentListeners]) {
-          listener.addSync(event);
+          if (!listener.isClosed) {
+            listener.addSync(event);
+          }
         }
       }, onError: (Object error, StackTrace stack) {
         if (repeatError) {
           handleError(error, stack);
         }
         for (var listener in [...currentListeners]) {
-          listener.addErrorSync(error, stack);
+          if (!listener.isClosed) {
+            listener.addErrorSync(error, stack);
+          }
         }
       }, onDone: () {
         done = true;
         for (var listener in [...currentListeners]) {
-          listener.closeSync();
+          if (!listener.isClosed) {
+            listener.closeSync();
+          }
         }
         currentListeners.clear();
       });

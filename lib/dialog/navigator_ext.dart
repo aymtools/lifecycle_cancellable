@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +15,13 @@ extension NavigatorCancellableRoute on NavigatorState {
     final Cancellable showing = Cancellable();
 
     showing.bindCancellable(cancellable);
-    showing.onCancel.then((value) => route.navigator?.removeRoute(route));
+    showing.onCancel.then((value) {
+      scheduleMicrotask(() {
+        if (showing.isAvailable) {
+          route.navigator?.removeRoute(route);
+        }
+      });
+    });
 
     return push<T>(route).whenComplete(() => showing.cancel());
   }

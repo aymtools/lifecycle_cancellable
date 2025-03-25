@@ -1,3 +1,7 @@
+## 2.2.1
+
+* Fix the bug of repeatLatest done.
+
 ## 2.2.0
 
 * The repeatOnLifecycle and collectOnLifecycle functions are extended to support error handling for

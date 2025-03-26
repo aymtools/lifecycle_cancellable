@@ -13,15 +13,18 @@ extension NavigatorCancellableRoute on NavigatorState {
     }
 
     final Cancellable showing = Cancellable();
-
-    showing.bindCancellable(cancellable);
-    showing.onCancel.then((value) {
-      scheduleMicrotask(() {
-        if (showing.isAvailable) {
-          route.navigator?.removeRoute(route);
-        }
-      });
+    // showing.bindCancellable(cancellable);
+    cancellable.onCancel.then((value) {
+      if (showing.isAvailable) {
+        scheduleMicrotask(() {
+          if (showing.isAvailable) {
+            showing.cancel();
+            route.navigator?.removeRoute(route);
+          }
+        });
+      }
     });
+    showing.onCancel.then((value) => cancellable.cancel());
 
     return push<T>(route).whenComplete(() => showing.cancel());
   }

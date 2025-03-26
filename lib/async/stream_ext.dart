@@ -117,25 +117,31 @@ extension StreamToolsExt<T> on Stream<T> {
       currentListeners.add(controller);
       sub ??= listen((event) {
         setLatest(event);
-        for (var listener in [...currentListeners]) {
-          if (!listener.isClosed) {
-            listener.addSync(event);
+        if (currentListeners.isNotEmpty) {
+          for (var listener in [...currentListeners]) {
+            if (!listener.isClosed) {
+              listener.addSync(event);
+            }
           }
         }
       }, onError: (Object error, StackTrace stack) {
         if (repeatError) {
           handleError(error, stack);
         }
-        for (var listener in [...currentListeners]) {
-          if (!listener.isClosed) {
-            listener.addErrorSync(error, stack);
+        if (currentListeners.isNotEmpty) {
+          for (var listener in [...currentListeners]) {
+            if (!listener.isClosed) {
+              listener.addErrorSync(error, stack);
+            }
           }
         }
       }, onDone: () {
         done = true;
-        for (var listener in [...currentListeners]) {
-          if (!listener.isClosed) {
-            listener.closeSync();
+        if (currentListeners.isNotEmpty) {
+          for (var listener in [...currentListeners]) {
+            if (!listener.isClosed) {
+              listener.closeSync();
+            }
           }
         }
         currentListeners.clear();

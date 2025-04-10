@@ -8,10 +8,24 @@ extension StreamLifecycleExt<T> on Stream<T> {
   /// 将Stream关联到lifecycle
   /// [repeatLastOnRestart] 是指当重新进入到状态时，是否发射之前的数据
   Stream<T> bindLifecycle(ILifecycle lifecycle,
-      {LifecycleState state = LifecycleState.started,
+      {LifecycleState state = LifecycleState.created,
+      @Deprecated('use repeatLastOnStateAtLeast v2.2.2')
       bool repeatLastOnRestart = false,
+      bool repeatLastOnStateAtLeast = false,
       bool closeWhenCancel = false,
       bool? cancelOnError}) {
+    if (state < LifecycleState.initialized) {
+      /// 如果与生命周期无关 则直接返回
+      return this;
+    } else if (state <= LifecycleState.created) {
+      // 如果是仅仅关心 当前 LifecycleState 的状态是未销毁的 则转换为 bindCancellable
+      return bindCancellable(lifecycle.makeLiveCancellable(),
+          closeWhenCancel: closeWhenCancel);
+    }
+
+    /// 保持旧版兼容性 未来删除
+    repeatLastOnStateAtLeast = repeatLastOnStateAtLeast || repeatLastOnRestart;
+
     StreamTransformer<T, T> transformer;
     bool isClose = false;
 
@@ -38,7 +52,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
       }
     }
 
-    if (repeatLastOnRestart) {
+    if (repeatLastOnStateAtLeast) {
       T? cache;
       EventSink<T>? eventSink;
       final lastCleanCache = cleanCache;

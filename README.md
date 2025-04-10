@@ -207,10 +207,10 @@ T withLifecycleEffect<T extends Object>({
 
 ```
   /// 将Stream关联到lifecycle
-  /// [repeatLastOnRestart] 是指当重新进入到状态时，是否发射之前的数据
+  /// [repeatLastOnStateAtLeast] 是指当重新进入到状态时，是否发射之前的数据
   Stream<T> bindLifecycle(ILifecycle lifecycle,
-      {LifecycleState state = LifecycleState.started,
-      bool repeatLastOnRestart = false,
+      {LifecycleState state = LifecycleState.created,
+      bool repeatLastOnStateAtLeast = false,
       bool closeWhenCancel = false,
       bool? cancelOnError})
 ```

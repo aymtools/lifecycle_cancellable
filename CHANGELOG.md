@@ -1,4 +1,4 @@
-## 2.2.2
+## 2.3.0
 
 * Adjust the parameters of Stream<T>.bindLifecycle.
 

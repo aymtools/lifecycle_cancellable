@@ -1,10 +1,14 @@
+## 2.3.0+1
+
+* Fix changelog display error.
+
 ## 2.3.0
 
-* Adjust the parameters of Stream<T>.bindLifecycle.
+* Adjust the parameters of Stream.bindLifecycle.
 
 ### Breaking Changes
 
-* In Stream<T>.bindLifecycle,
+* In Stream.bindLifecycle,
   The parameter repeatLastOnRestart is deprecated.
   A new parameter repeatLastOnStateAtLeast.
   The default value of the state parameter is changed from LifecycleState.started to

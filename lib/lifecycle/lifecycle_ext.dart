@@ -67,18 +67,19 @@ final Map<ILifecycle, _CacheMapObserver> _map = {};
 
 class _CacheMapObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
-  final Set<Cancellable> _liveCancellable = {};
+
+  // final Set<Cancellable> _liveCancellable = {};
 
   Cancellable _makeCancellableForLive({Cancellable? other}) {
-    final cancellable =
-        _cancellable.makeCancellable(infectious: false, father: other);
+    final cancellable = _cancellable.makeCancellable(
+        infectious: false, father: other, weakRef: false);
 
-    if (cancellable.isAvailable) {
-      cancellable.whenCancel
-          .bindCancellable(_cancellable)
-          .then((_) => _liveCancellable.remove(cancellable));
-      _liveCancellable.add(cancellable);
-    }
+    // if (cancellable.isAvailable) {
+    //   cancellable.whenCancel
+    //       .bindCancellable(_cancellable)
+    //       .then((_) => _liveCancellable.remove(cancellable));
+    //   _liveCancellable.add(cancellable);
+    // }
 
     return cancellable;
   }
@@ -98,7 +99,7 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
   void onDestroy(LifecycleOwner owner) {
     super.onDestroy(owner);
     _cancellable.cancel();
-    _liveCancellable.clear();
+    // _liveCancellable.clear();
   }
 }
 

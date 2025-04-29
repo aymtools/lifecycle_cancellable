@@ -1,3 +1,7 @@
+## 2.3.1
+
+* Upgrade dependencies.
+
 ## 2.3.0+1
 
 * Fix changelog display error.

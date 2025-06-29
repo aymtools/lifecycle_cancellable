@@ -14,17 +14,17 @@ extension NavigatorCancellableRoute on NavigatorState {
 
     final Cancellable showing = Cancellable();
     // showing.bindCancellable(cancellable);
-    cancellable.onCancel.then((value) {
+    cancellable.onCancel.then((_) {
       if (showing.isAvailable) {
         scheduleMicrotask(() {
-          if (showing.isAvailable) {
+          if (showing.isAvailable && route.isActive) {
             showing.cancel();
             route.navigator?.removeRoute(route);
           }
         });
       }
     });
-    showing.onCancel.then((value) => cancellable.cancel());
+    showing.onCancel.then((value) => cancellable.cancel(value));
 
     return push<T>(route).whenComplete(() => showing.cancel());
   }

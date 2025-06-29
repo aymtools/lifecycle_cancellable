@@ -1,3 +1,7 @@
+## 2.3.2
+
+* Fix the determination of whether the route is active when canceling pushCancellableRoute.
+
 ## 2.3.1
 
 * Upgrade dependencies.

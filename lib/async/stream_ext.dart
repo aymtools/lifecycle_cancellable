@@ -140,7 +140,7 @@ extension StreamToolsExt<T> on Stream<T> {
         if (currentListeners.isNotEmpty) {
           for (var listener in [...currentListeners]) {
             if (!listener.isClosed) {
-              listener.closeSync();
+              listener.close();
             }
           }
         }

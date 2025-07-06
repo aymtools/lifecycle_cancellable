@@ -24,7 +24,7 @@ extension NavigatorCancellableRoute on NavigatorState {
         });
       }
     });
-    showing.onCancel.then((value) => cancellable.cancel(value));
+    showing.onCancel.then(cancellable.cancel);
 
     return push<T>(route).whenComplete(() => showing.cancel());
   }

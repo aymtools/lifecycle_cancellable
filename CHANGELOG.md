@@ -1,3 +1,7 @@
+## 2.3.3
+
+* Change the listener in Stream.repeatLatest from closeSync to close.
+
 ## 2.3.2
 
 * Fix the determination of whether the route is active when canceling pushCancellableRoute.

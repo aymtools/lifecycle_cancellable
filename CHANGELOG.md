@@ -1,3 +1,7 @@
+## 2.4.0
+
+* Added a remember extension on BuildContext
+
 ## 2.3.3
 
 * Change the listener in Stream.repeatLatest from closeSync to close.

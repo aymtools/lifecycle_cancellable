@@ -384,3 +384,23 @@ class FlexibleKey {
         object20 == other.object20;
   }
 }
+
+class TypedKey<T> {
+  final Object? key;
+
+  TypedKey([this.key]);
+
+  @override
+  late final int hashCode = Object.hashAll([T, key]);
+
+  @override
+  bool operator ==(Object other) {
+    return other is TypedKey<T> && key == other.key;
+  }
+
+  static Object genKey<T extends Object>({Object? key}) => key == null
+      ? T
+      : key is TypedKey<T>
+          ? key
+          : TypedKey<T>(key);
+}

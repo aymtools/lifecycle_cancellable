@@ -265,6 +265,21 @@ T withLifecycleAndDataEffect<T extends Object>({
   })
 ```
 
+### 利用Lifecycle为Context记住一个类型的对象
+
+以当前context、类型、key为索引 记住该对象，并且以后将再次返回该对象
+factory 和 factory2 不能同时为空 factory 优先级高于 factory2
+onDispose 当执行清理时的回调[context]一定已经销毁了，不可使用[context]相关内容
+
+```
+T remember<T extends Object>({
+    T Function()? factory,
+    T Function(Lifecycle)? factory2,
+    FutureOr<void> Function(T)? onDispose,
+    Object? key,
+  })
+```
+
 ## ChangeNotifier 的扩展
 
 ### 与 cancellable关联 取消时自动调用dispose

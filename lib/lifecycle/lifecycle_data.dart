@@ -1,19 +1,12 @@
+import 'package:an_lifecycle_cancellable/key/key.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:weak_collections/weak_collections.dart';
 
-class TypedKey<T> {
-  final Object? key;
-
-  TypedKey([this.key]);
-
-  @override
-  int get hashCode => Object.hashAll([T, key]);
-
-  @override
-  bool operator ==(Object other) {
-    return other is TypedKey<T> && key == other.key;
-  }
-}
+Object _genKey<T extends Object>({Object? key}) => key == null
+    ? T
+    : key is TypedKey<T>
+        ? key
+        : TypedKey<T>(key);
 
 /// 寄存于lifecycle的数据 基类
 abstract class LifecycleExtData {
@@ -24,12 +17,6 @@ abstract class LifecycleExtData {
   bool get isDestroyed => _isDestroyed;
 
   LifecycleExtData._();
-
-  Object _genKey<T extends Object>({Object? key}) => key == null
-      ? T
-      : key is TypedKey<T>
-          ? key
-          : TypedKey<T>(key);
 
   /// 根据Type + key获取，如果不存在则创建信息
   T putIfAbsent<T extends Object>(

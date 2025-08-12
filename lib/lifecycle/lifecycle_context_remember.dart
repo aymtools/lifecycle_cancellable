@@ -4,7 +4,7 @@ import 'dart:collection';
 import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
 import 'package:an_lifecycle_cancellable/key/key.dart';
 import 'package:anlifecycle/anlifecycle.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:weak_collections/weak_collections.dart';
 
 class _RememberEntity<T> {
@@ -107,4 +107,106 @@ extension BuildContextLifecycleRememberExt on BuildContext {
 
     return manager.getOrCreate<T>(factory, factory2, onDispose, key);
   }
+
+  /// 获取可用的TabController
+  TabController rememberTabController({
+    int initialIndex = 0,
+    Duration? animationDuration,
+    required int length,
+    Object? key,
+  }) =>
+      remember<TabController>(
+        factory2: (l) => TabController(
+          initialIndex: initialIndex,
+          length: length,
+          vsync: l.tickerProvider,
+        ),
+        key: FlexibleKey(initialIndex, animationDuration, length, key),
+      );
+
+  /// 动画控制器
+  AnimationController rememberAnimationController({
+    double? value,
+    Duration? duration,
+    Duration? reverseDuration,
+    String? debugLabel,
+    double lowerBound = 0.0,
+    double upperBound = 1.0,
+    AnimationBehavior animationBehavior = AnimationBehavior.normal,
+    Object? key,
+  }) {
+    return remember<AnimationController>(
+      factory2: (l) => AnimationController(
+        value: value,
+        duration: duration,
+        reverseDuration: reverseDuration,
+        debugLabel: debugLabel,
+        lowerBound: lowerBound,
+        upperBound: upperBound,
+        animationBehavior: animationBehavior,
+        vsync: l.tickerProvider,
+      ),
+      key: FlexibleKey(value, duration, reverseDuration, lowerBound, upperBound,
+          animationBehavior, key),
+      onDispose: (c) => c.dispose(),
+    );
+  }
+
+  /// 动画控制器
+  AnimationController rememberAnimationControllerUnbounded({
+    double value = 0.0,
+    Duration? duration,
+    Duration? reverseDuration,
+    String? debugLabel,
+    AnimationBehavior animationBehavior = AnimationBehavior.normal,
+    Object? key,
+  }) {
+    return remember<AnimationController>(
+      factory2: (l) => AnimationController.unbounded(
+        value: value,
+        duration: duration,
+        reverseDuration: reverseDuration,
+        debugLabel: debugLabel,
+        animationBehavior: animationBehavior,
+        vsync: l.tickerProvider,
+      ),
+      key: FlexibleKey('Unbounded', value, duration, reverseDuration,
+          animationBehavior, key),
+      onDispose: (c) => c.dispose(),
+    );
+  }
+
+  /// 滚动控制器
+  ScrollController rememberScrollController({
+    double initialScrollOffset = 0.0,
+    bool keepScrollOffset = true,
+    String? debugLabel,
+    Object? key,
+  }) =>
+      remember<ScrollController>(
+        factory: () => ScrollController(
+          initialScrollOffset: initialScrollOffset,
+          keepScrollOffset: keepScrollOffset,
+          debugLabel: debugLabel,
+        ),
+        key:
+            FlexibleKey(initialScrollOffset, keepScrollOffset, debugLabel, key),
+        onDispose: (c) => c.dispose(),
+      );
+
+  ValueNotifier<T> rememberValueNotifier<T>(
+          {T? value,
+          T Function()? factory,
+          T Function(Lifecycle)? factory2,
+          Object? key}) =>
+      remember<ValueNotifier<T>>(
+        factory2: (l) {
+          assert(value != null || factory != null || factory2 != null,
+              'value and factory and factory2 cannot be null at the same time');
+          value ??= factory?.call();
+          value ??= factory2?.call(l);
+          return CancellableValueNotifier(value as T, l.makeLiveCancellable());
+        },
+        key: FlexibleKey(value, factory, factory2, key),
+      );
 }

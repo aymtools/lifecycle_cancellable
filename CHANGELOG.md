@@ -1,6 +1,7 @@
 ## 2.4.0
 
 * Added a remember extension on BuildContext
+* Add CancellableValueNotifier.
 
 ## 2.3.3
 

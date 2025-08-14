@@ -1,5 +1,6 @@
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 /// Cancellable 取消后 set value 不在发出通知
 class CancellableValueNotifier<T> extends ValueNotifier<T> {
@@ -58,5 +59,24 @@ class CancellableValueNotifier<T> extends ValueNotifier<T> {
   // ignore: must_call_super
   void dispose() {
     _cancellable.cancel();
+  }
+}
+
+extension ValueNotifierBuilderExt<T> on ValueListenable<T> {
+  /// 快速构建一个ValueListenableBuilder
+  /// ignore: non_constant_identifier_names
+  Widget Builder({
+    required Widget Function(BuildContext context, T value, Widget child)
+        builder,
+    Widget child = const SizedBox.shrink(),
+    Key? key,
+  }) {
+    return ValueListenableBuilder<T>(
+      key: key,
+      valueListenable: this,
+      builder: (context, value, _) {
+        return builder(context, value, child);
+      },
+    );
   }
 }

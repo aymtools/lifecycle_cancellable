@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
-import 'package:an_lifecycle_cancellable/key/key.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/material.dart';
 import 'package:weak_collections/weak_collections.dart';
@@ -99,9 +98,10 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     }
 
     final lifecycle = Lifecycle.of(this);
-    final managers = lifecycle.extData.getOrPut(
-        key: _keyRemember,
-        ifAbsent: (l) => WeakHashMap<BuildContext, _RememberDisposeObserver>());
+    final managers = lifecycle.extData
+        .getOrPut<Map<BuildContext, _RememberDisposeObserver>>(
+            key: _keyRemember, ifAbsent: (l) => WeakHashMap());
+
     final manager = managers.putIfAbsent(
         this, () => _RememberDisposeObserver._(this, lifecycle));
 
@@ -109,6 +109,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
   }
 
   /// 获取可用的TabController
+  /// 任何参数发生变化就会产生新的
   TabController rememberTabController({
     int initialIndex = 0,
     Duration? animationDuration,
@@ -125,6 +126,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
       );
 
   /// 动画控制器
+  /// 任何参数发生变化就会产生新的
   AnimationController rememberAnimationController({
     double? value,
     Duration? duration,
@@ -153,6 +155,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
   }
 
   /// 动画控制器
+  /// 任何参数发生变化就会产生新的
   AnimationController rememberAnimationControllerUnbounded({
     double value = 0.0,
     Duration? duration,
@@ -177,6 +180,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
   }
 
   /// 滚动控制器
+  /// 任何参数发生变化就会产生新的
   ScrollController rememberScrollController({
     double initialScrollOffset = 0.0,
     bool keepScrollOffset = true,
@@ -194,18 +198,33 @@ extension BuildContextLifecycleRememberExt on BuildContext {
         onDispose: (c) => c.dispose(),
       );
 
-  ValueNotifier<T> rememberValueNotifier<T>(
-          {T? value,
-          T Function()? factory,
-          T Function(Lifecycle)? factory2,
-          Object? key}) =>
+  /// ValueNotifier
+  /// [listen] 当前的 Context 自动监听生成的 ValueNotifier 不作为key 只有首次有效 后续变化无效
+  ValueNotifier<T> rememberValueNotifier<T>({
+    T? value,
+    T Function()? factory,
+    T Function(Lifecycle)? factory2,
+    Object? key,
+    bool listen = false,
+  }) =>
       remember<ValueNotifier<T>>(
         factory2: (l) {
           assert(value != null || factory != null || factory2 != null,
               'value and factory and factory2 cannot be null at the same time');
           value ??= factory?.call();
           value ??= factory2?.call(l);
-          return CancellableValueNotifier(value as T, l.makeLiveCancellable());
+          final r =
+              CancellableValueNotifier(value as T, l.makeLiveCancellable());
+          if (listen && this is Element) {
+            final rContext = WeakReference(this);
+            r.addCListener(l.makeLiveCancellable(), () {
+              final element = rContext.target as Element?;
+              if (element != null) {
+                element.markNeedsBuild();
+              }
+            });
+          }
+          return r;
         },
         key: FlexibleKey(value, factory, factory2, key),
       );

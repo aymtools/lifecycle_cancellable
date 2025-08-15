@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:an_lifecycle_cancellable/key/key.dart';
+import 'package:an_lifecycle_cancellable/tools/weak_map_clear.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';
@@ -366,7 +367,7 @@ extension BuildContextLifecycleWithExt on BuildContext {
 
     final cache2 = cache.putIfAbsent(ctx, () {
       final result = HashMap<Object, _DLauncherObserver>();
-      lifecycle.addLifecycleObserver(_WeakMapClear(result));
+      lifecycle.addLifecycleObserver(MapAutoClearObserver(result));
       return result;
     });
 
@@ -419,7 +420,7 @@ extension BuildContextLifecycleWithExt on BuildContext {
       final result = HashMap<Object, Object?>();
 
       /// 不持有 Map，防止内存泄漏
-      lifecycle.addLifecycleObserver(_WeakMapClear(result));
+      lifecycle.addLifecycleObserver(MapAutoClearObserver(result));
       return result;
     });
 
@@ -454,26 +455,6 @@ extension BuildContextLifecycleWithExt on BuildContext {
       repeatOnResumed: repeatOnResumed,
       launchOnDestroy: launchOnDestroy,
     );
-  }
-}
-
-class _WeakMapClear with LifecycleStateChangeObserver {
-  final WeakReference<Map> _weakReference;
-
-  _WeakMapClear(Map map) : _weakReference = WeakReference(map);
-
-  void clear() {
-    _weakReference.target?.clear();
-  }
-
-  @override
-  void onStateChange(LifecycleOwner owner, LifecycleState state) {
-    if (state > LifecycleState.destroyed && _weakReference.target == null) {
-      // 如果发现已经被销毁了 则将当前的Observer也注销掉
-      owner.removeLifecycleObserver(this, fullCycle: false);
-    } else if (state == LifecycleState.destroyed) {
-      clear();
-    }
   }
 }
 

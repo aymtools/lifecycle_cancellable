@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 abstract class _LifecycleEventObserverWrapper
     implements LifecycleEventObserver {

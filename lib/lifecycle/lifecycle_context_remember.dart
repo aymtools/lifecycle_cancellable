@@ -1,7 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:an_lifecycle_cancellable/an_lifecycle_cancellable.dart';
+import 'package:an_lifecycle_cancellable/key/key.dart';
+import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_controller.dart';
+import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_data.dart';
+import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_ext.dart';
+import 'package:an_lifecycle_cancellable/listenable/change_notifier_ext.dart';
+import 'package:an_lifecycle_cancellable/listenable/value_notifier.dart';
+import 'package:an_lifecycle_cancellable/tools/weak_map_clear.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/material.dart';
 import 'package:weak_collections/weak_collections.dart';
@@ -45,6 +51,7 @@ class _RememberDisposeObserver with LifecycleStateChangeObserver {
     if (state == LifecycleState.destroyed) {
       _lastState = state;
       _safeCallDisposer(owner.lifecycle);
+      _values.clear();
       return;
     }
 
@@ -98,9 +105,17 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     }
 
     final lifecycle = Lifecycle.of(this);
-    final managers = lifecycle.extData
-        .getOrPut<Map<BuildContext, _RememberDisposeObserver>>(
-            key: _keyRemember, ifAbsent: (l) => WeakHashMap());
+    final managers =
+        lifecycle.extData.getOrPut<Map<BuildContext, _RememberDisposeObserver>>(
+            key: _keyRemember,
+            ifAbsent: (l) {
+              final result =
+                  WeakHashMap<BuildContext, _RememberDisposeObserver>();
+
+              /// 不持有 Map，防止内存泄漏
+              lifecycle.addLifecycleObserver(MapAutoClearObserver(result));
+              return result;
+            });
 
     final manager = managers.putIfAbsent(
         this, () => _RememberDisposeObserver._(this, lifecycle));

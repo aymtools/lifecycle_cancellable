@@ -2,6 +2,8 @@ import 'package:an_lifecycle_cancellable/key/key.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:weak_collections/weak_collections.dart';
 
+export 'package:an_lifecycle_cancellable/key/key.dart' show TypedKey;
+
 Object _genKey<T extends Object>({Object? key}) => key == null
     ? T
     : key is TypedKey<T>

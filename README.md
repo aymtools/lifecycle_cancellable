@@ -225,6 +225,8 @@ T withLifecycleEffect<T extends Object>({
 
 ## 对BuildContext中 关联 Lifecycle 的扩展
 
+**注意初始化Lifecycle的环境**
+
 当前的context会作为key的一部分，即若element发生了变化则会识别为新的作用域
 
 ### 从当前的Context中获取最近的Lifecycle并执行相关的任务
@@ -240,6 +242,64 @@ void withLifecycleEffect({
     LLauncher? repeatOnResumed,
     LLauncher? launchOnDestroy,
   }) 
+```
+
+### 让Context记住一个类型的对象，并且利用lifecycle检测是否销毁
+
+以当前context、类型、key为索引 记住该对象，并且以后将再次返回该对象
+factory 和 factory2 不能同时为空 factory 优先级高于 factory2
+onDispose 当执行清理时的回调[context]一定已经销毁了，不可使用[context]相关内容
+
+```
+  T remember<T extends Object>({
+    T Function()? factory,
+    T Function(Lifecycle)? factory2,
+    FutureOr<void> Function(T)? onDispose,
+    Object? key,
+  })
+  
+  /// 获取可用的TabController
+  /// 其中[initialIndex] [animationDuration] [length] [key]任何一个参数发生变化就会产生新的 TabController
+  TabController rememberTabController({
+    int initialIndex = 0,
+    Duration? animationDuration,
+    required int length,
+    Object? key,
+  })
+  
+  /// 获取可用的动画控制器
+  /// 规则同上 任何参数发生变化就会产生新的 AnimationController
+  AnimationController rememberAnimationController({
+    double? value,
+    Duration? duration,
+    Duration? reverseDuration,
+    String? debugLabel,
+    double lowerBound = 0.0,
+    double upperBound = 1.0,
+    AnimationBehavior animationBehavior = AnimationBehavior.normal,
+    Object? key,
+  })
+  
+  /// 获取可用的 ScrollController
+  /// 规则同上 任何参数发生变化就会产生新的 ScrollController
+  ScrollController rememberScrollController({
+    double initialScrollOffset = 0.0,
+    bool keepScrollOffset = true,
+    String? debugLabel,
+    Object? key,
+  })
+  
+  /// 快速生成一个可用的类型 ValueNotifier
+  /// 确定是否需要更新对象只有 type 和 key
+  /// [value] [factory] [factory2] 确定如何初始化的创建一个 ValueNotifier 必须有一个不能为空 不作为更新key
+  /// [listen] 当前的 Context 自动监听生成的 ValueNotifier 不作为更新key 只有首次有效 后续变化无效
+  ValueNotifier<T> rememberValueNotifier<T>({
+    T? value,
+    T Function()? factory,
+    T Function(Lifecycle)? factory2,
+    Object? key,
+    bool listen = false,
+  })
 ```
 
 ### 从当前的Context中获取Lifecycle 并且data 同属于 key的一部分 并执行相关的任务
@@ -261,21 +321,6 @@ T withLifecycleAndDataEffect<T extends Object>({
     DLauncher<T>? repeatOnStarted,
     DLauncher<T>? repeatOnResumed,
     DLauncher<T>? launchOnDestroy,
-    Object? key,
-  })
-```
-
-### 利用Lifecycle为Context记住一个类型的对象
-
-以当前context、类型、key为索引 记住该对象，并且以后将再次返回该对象
-factory 和 factory2 不能同时为空 factory 优先级高于 factory2
-onDispose 当执行清理时的回调[context]一定已经销毁了，不可使用[context]相关内容
-
-```
-T remember<T extends Object>({
-    T Function()? factory,
-    T Function(Lifecycle)? factory2,
-    FutureOr<void> Function(T)? onDispose,
     Object? key,
   })
 ```

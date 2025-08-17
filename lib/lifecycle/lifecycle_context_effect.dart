@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:an_lifecycle_cancellable/key/key.dart';
 import 'package:an_lifecycle_cancellable/tools/weak_map_clear.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
@@ -198,7 +197,7 @@ final _withLifecycleAndExtDataKey = Object();
 // }
 
 extension BuildContextLifecycleWithExt on BuildContext {
-  /// 从当前的Context中获取Lifecycle并使用
+  /// 从当前的[Context]中获取[Lifecycle]并使用
   void withLifecycleEffect({
     LLauncher? launchOnFirstCreate,
     LLauncher? launchOnFirstStart,
@@ -246,8 +245,8 @@ extension BuildContextLifecycleWithExt on BuildContext {
     }
   }
 
-  /// 从当前的Context中获取Lifecycle使用 并且data 同属于 key的一部分
-  /// 如果使用factory 则必须保证多次调用时返回同一值 否则将会视为新建
+  /// 从当前的[Context]中获取[Lifecycle]使用 并且data 同属于 key的一部分
+  /// * 如果使用[factory],[factory2] 则必须保证多次调用时返回同一值 否则将会视为新建
   @Deprecated('use withLifecycleAndDataEffect')
   T withLifecycleEffectData<T extends Object>({
     T? data,
@@ -331,8 +330,8 @@ extension BuildContextLifecycleWithExt on BuildContext {
   //   return data;
   // }
 
-  /// 从当前的Context中获取Lifecycle使用 并且data 同属于 key的一部分
-  /// 如果使用factory 则必须保证多次调用时返回同一值 否则将会视为新建
+  /// 从当前的[Context]中获取[Lifecycle]使用 并且data 同属于 key的一部分
+  /// * 如果使用[factory],[factory2] 则必须保证多次调用时返回同一值 否则将会视为新建
   T withLifecycleAndDataEffect<T extends Object>({
     T? data,
     T Function()? factory,
@@ -401,9 +400,9 @@ extension BuildContextLifecycleWithExt on BuildContext {
     return data;
   }
 
-  /// 从当前context生成一个绑定到liveDate内部的缓存数据
-  /// context 销毁时自动清理
-  /// 与 [withLifecycleAndExtDataEffect] 数据相同
+  /// 从当前[context]生成一个绑定到[liveDate]内部的缓存数据
+  /// * [context] 销毁时自动清理
+  /// * 与 [withLifecycleAndExtDataEffect] 数据相同
   T withLifecycleExtData<T extends Object>({
     T Function()? factory,
     T Function(Lifecycle lifecycle)? factory2,
@@ -427,9 +426,9 @@ extension BuildContextLifecycleWithExt on BuildContext {
     return data.putIfAbsent(key == null ? T : TypedKey<T>(key), factory) as T;
   }
 
-  /// 从当前context生成一个绑定到liveDate内部的缓存数据 并提供生命周期的相关函数
-  /// context 销毁时自动清理
-  /// 与 [withLifecycleExtData] 数据相同
+  /// 从当前[context]生成一个绑定到[liveDate]内部的缓存数据 并提供生命周期的相关函数
+  /// * [context] 销毁时自动清理
+  /// * 与 [withLifecycleExtData] 数据相同
   T withLifecycleAndExtDataEffect<T extends Object>({
     T Function()? factory,
     T Function(Lifecycle lifecycle)? factory2,

@@ -104,7 +104,7 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
 }
 
 extension LifecycleObserverRegistryCacnellable on ILifecycle {
-  /// 构建一个绑定到lifecycle的Cancellable
+  /// 构建一个绑定到[lifecycle]的[Cancellable]
   Cancellable makeLiveCancellable({Cancellable? other}) {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'Must be used before destroyed.');
@@ -117,7 +117,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
   }
 
   /// 当高于某个状态时执行给定的block
-  /// [ignoreBlockError]是否忽略错误 值为 false 时直接报错
+  /// * [ignoreBlockError]是否忽略错误 值为 false 时直接报错
   void repeatOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
       bool runWithDelayed = false,
@@ -163,8 +163,8 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
   }
 
   ///当高于某个状态时执行给定的block,并将结果收集起来为Stream
-  ///[collectBlockError] 当发生错误时将错误也收集起来,值为 false 时[ignoreBlockError]有效
-  ///[ignoreBlockError]是否忽略错误 值为 false 时直接报错
+  ///* [collectBlockError] 当发生错误时将错误也收集起来,值为 false 时[ignoreBlockError]有效
+  ///* [ignoreBlockError]是否忽略错误 值为 false 时直接报错
   Stream<T> collectOnLifecycle<T>(
       {LifecycleState targetState = LifecycleState.started,
       bool runWithDelayed = false,
@@ -564,7 +564,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 }
 
 extension LifecycleFinderExt on ILifecycle {
-  /// 从当前环境中向上寻找特定的 LifecycleOwner
+  /// 从当前环境中向上寻找特定的 [LifecycleOwner]
   LO? findLifecycleOwner<LO extends LifecycleOwner>({bool Function(LO)? test}) {
     Lifecycle? life = toLifecycle();
     if (test == null) {

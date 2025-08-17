@@ -86,7 +86,7 @@ class _LifecycleTickerProvider implements TickerProvider {
 final _keyLifecycleTickerProvider = Object();
 
 extension LifecycleTickerProviderExt on ILifecycle {
-  /// 基于lifecycle来生成 TickerProvider
+  /// 基于[lifecycle]来生成 [TickerProvider]
   TickerProvider get tickerProvider =>
       toLifecycle().extData.getOrPut<_LifecycleTickerProvider>(
             key: _keyLifecycleTickerProvider,

@@ -102,11 +102,11 @@ class LifecycleRegistryExtData extends LifecycleExtData {
 final Map<Lifecycle, LiveExtData> _liveExtDataCache = WeakHashMap();
 
 extension LifecycleTypedDataExt on Lifecycle {
-  /// 获取lifecycle管理的扩展数据 于destroy时自动清理
+  /// 获取[lifecycle]管理的扩展数据 于[destroy]时自动清理
   @Deprecated('use extData')
   LiveExtData get lifecycleExtData => extData;
 
-  /// 获取lifecycle管理的扩展数据 于destroy时自动清理
+  /// 获取[lifecycle]管理的扩展数据 于[destroy]时自动清理
   LiveExtData get extData {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
@@ -122,11 +122,11 @@ final Map<ILifecycleRegistry, LifecycleRegistryExtData>
     _liveRegistryExtDataCache = WeakHashMap();
 
 extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
-  /// 获取lifecycle管理的扩展数据 于destroy时自动清理
+  /// 获取[lifecycle]管理的扩展数据 于[destroy]时自动清理
   @Deprecated('use extData')
   LiveExtData get lifecycleExtData => extData;
 
-  /// 获取lifecycle管理的扩展数据 于destroy时自动清理
+  /// 获取[lifecycle]管理的扩展数据 于[destroy]时自动清理
   LiveExtData get extData {
     assert(() {
       if (this is LifecycleRegistryState) {
@@ -141,7 +141,7 @@ extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
     return lifecycle.extData;
   }
 
-  /// 获取 LifecycleRegistry 管理的扩展数据 于destroy时自动清理
+  /// 获取 [LifecycleRegistry] 管理的扩展数据 于[destroy]时自动清理
   LifecycleRegistryExtData get extDataForRegistry {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'The currentLifecycleState state must be greater than LifecycleState.destroyed.');

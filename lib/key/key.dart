@@ -385,6 +385,7 @@ class FlexibleKey {
   }
 }
 
+/// 以泛型类型和 key 参数作为索引
 class TypedKey<T> {
   final Object? key;
 
@@ -398,6 +399,7 @@ class TypedKey<T> {
     return other is TypedKey<T> && key == other.key;
   }
 
+  /// 产生一个泛型类型的key 如果不指定参数key 则直接以参数的 Type作为key
   static Object genKey<T extends Object>({Object? key}) => key == null
       ? T
       : key is TypedKey<T>

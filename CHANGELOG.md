@@ -1,3 +1,7 @@
+## 2.4.1
+
+* Add onDispose callback uniformly to rememberXXX.
+
 ## 2.4.0
 
 * Added a remember extension on BuildContext

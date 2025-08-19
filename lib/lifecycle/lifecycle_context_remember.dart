@@ -35,39 +35,39 @@ class _RememberEntity<T> {
 }
 
 class _RememberDisposeObserver with LifecycleStateChangeObserver {
-  final WeakReference<BuildContext> _context;
   final _values = HashMap<Object, _RememberEntity<dynamic>>();
   final Lifecycle _lifecycle;
-  LifecycleState _lastState = LifecycleState.initialized;
+  bool _isDisposed = false;
+
+  late final Finalizer<_RememberDisposeObserver> _finalizer =
+      Finalizer<_RememberDisposeObserver>(
+    (observer) {
+      observer._lifecycle.removeLifecycleObserver(observer, fullCycle: false);
+      observer._safeCallDisposer(callDetach: false);
+    },
+  );
 
   _RememberDisposeObserver._(BuildContext context, Lifecycle lifecycle)
-      : _context = WeakReference(context),
-        _lifecycle = lifecycle {
+      : _lifecycle = lifecycle {
     _lifecycle.addLifecycleObserver(this);
+    _finalizer.attach(context, this, detach: this);
   }
 
   @override
   void onStateChange(LifecycleOwner owner, LifecycleState state) {
     if (state == LifecycleState.destroyed) {
-      _lastState = state;
-      _safeCallDisposer(owner.lifecycle);
-      _values.clear();
-      return;
+      _safeCallDisposer();
     }
-
-    if (_lastState > LifecycleState.destroyed &&
-        (_context.target == null || _context.target?.mounted != true)) {
-      _lastState = LifecycleState.destroyed;
-      owner.removeLifecycleObserver(this, fullCycle: true);
-      return;
-    }
-    _lastState = state;
   }
 
-  void _safeCallDisposer(Lifecycle lifecycle) async {
+  void _safeCallDisposer({bool callDetach = true}) async {
+    if (_isDisposed) return;
+    _isDisposed = true;
     for (var disposable in [..._values.values]) {
       disposable._safeInvokeOnDispose();
     }
+    _values.clear();
+    if (callDetach) _finalizer.detach(this);
   }
 
   T getOrCreate<T extends Object>(
@@ -129,6 +129,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     int initialIndex = 0,
     Duration? animationDuration,
     required int length,
+    FutureOr<void> Function(TabController)? onDispose,
     Object? key,
   }) =>
       remember<TabController>(
@@ -137,6 +138,10 @@ extension BuildContextLifecycleRememberExt on BuildContext {
           length: length,
           vsync: l.tickerProvider,
         ),
+        onDispose: (c) {
+          c.dispose();
+          onDispose?.call(c);
+        },
         key: FlexibleKey(initialIndex, animationDuration, length, key),
       );
 
@@ -150,6 +155,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     double lowerBound = 0.0,
     double upperBound = 1.0,
     AnimationBehavior animationBehavior = AnimationBehavior.normal,
+    FutureOr<void> Function(AnimationController)? onDispose,
     Object? key,
   }) {
     return remember<AnimationController>(
@@ -165,7 +171,10 @@ extension BuildContextLifecycleRememberExt on BuildContext {
       ),
       key: FlexibleKey(value, duration, reverseDuration, lowerBound, upperBound,
           animationBehavior, key),
-      onDispose: (c) => c.dispose(),
+      onDispose: (c) {
+        c.dispose();
+        onDispose?.call(c);
+      },
     );
   }
 
@@ -177,6 +186,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     Duration? reverseDuration,
     String? debugLabel,
     AnimationBehavior animationBehavior = AnimationBehavior.normal,
+    FutureOr<void> Function(AnimationController)? onDispose,
     Object? key,
   }) {
     return remember<AnimationController>(
@@ -190,7 +200,10 @@ extension BuildContextLifecycleRememberExt on BuildContext {
       ),
       key: FlexibleKey('Unbounded', value, duration, reverseDuration,
           animationBehavior, key),
-      onDispose: (c) => c.dispose(),
+      onDispose: (c) {
+        c.dispose();
+        onDispose?.call(c);
+      },
     );
   }
 
@@ -200,6 +213,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     double initialScrollOffset = 0.0,
     bool keepScrollOffset = true,
     String? debugLabel,
+    FutureOr<void> Function(ScrollController)? onDispose,
     Object? key,
   }) =>
       remember<ScrollController>(
@@ -210,7 +224,10 @@ extension BuildContextLifecycleRememberExt on BuildContext {
         ),
         key:
             FlexibleKey(initialScrollOffset, keepScrollOffset, debugLabel, key),
-        onDispose: (c) => c.dispose(),
+        onDispose: (c) {
+          c.dispose();
+          onDispose?.call(c);
+        },
       );
 
   /// 快速生成一个可用的类型 ValueNotifier
@@ -221,8 +238,9 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     T? value,
     T Function()? factory,
     T Function(Lifecycle)? factory2,
-    Object? key,
+    FutureOr<void> Function(ValueNotifier<T>)? onDispose,
     bool listen = false,
+    Object? key,
   }) =>
       remember<ValueNotifier<T>>(
         factory2: (l) {
@@ -242,6 +260,10 @@ extension BuildContextLifecycleRememberExt on BuildContext {
             });
           }
           return r;
+        },
+        onDispose: (d) {
+          d.dispose();
+          onDispose?.call(d);
         },
         key: FlexibleKey(value, factory, factory2, key),
       );

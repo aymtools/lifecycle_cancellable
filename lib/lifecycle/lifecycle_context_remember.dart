@@ -37,6 +37,7 @@ class _RememberEntity<T> {
 class _RememberDisposeObserver with LifecycleStateChangeObserver {
   final _values = HashMap<Object, _RememberEntity<dynamic>>();
   final Lifecycle _lifecycle;
+  final WeakReference<BuildContext> _context;
   bool _isDisposed = false;
 
   late final Finalizer<_RememberDisposeObserver> _finalizer =
@@ -48,7 +49,8 @@ class _RememberDisposeObserver with LifecycleStateChangeObserver {
   );
 
   _RememberDisposeObserver._(BuildContext context, Lifecycle lifecycle)
-      : _lifecycle = lifecycle {
+      : _context = WeakReference(context),
+        _lifecycle = lifecycle {
     _lifecycle.addLifecycleObserver(this);
     _finalizer.attach(context, this, detach: this);
   }
@@ -56,6 +58,10 @@ class _RememberDisposeObserver with LifecycleStateChangeObserver {
   @override
   void onStateChange(LifecycleOwner owner, LifecycleState state) {
     if (state == LifecycleState.destroyed) {
+      _safeCallDisposer();
+    } else if (state > LifecycleState.initialized &&
+        _context.target?.mounted != true) {
+      owner.removeLifecycleObserver(this, fullCycle: false);
       _safeCallDisposer();
     }
   }

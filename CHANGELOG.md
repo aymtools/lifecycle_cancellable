@@ -1,6 +1,7 @@
 ## 2.4.1
 
 * Add onDispose callback uniformly to rememberXXX.
+* ILifecycle.makeLiveCancellable() manager use weak references.
 
 ## 2.4.0
 

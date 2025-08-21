@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/widgets.dart';
+import 'package:weak_collections/weak_collections.dart';
 
 abstract class _LifecycleEventObserverWrapper
     implements LifecycleEventObserver {
@@ -63,32 +64,20 @@ extension LifecycleObserverRegistryMixinContextExt
       });
 }
 
-final Map<ILifecycle, _CacheMapObserver> _map = {};
+final Map<ILifecycle, _LiveCancellableManagerObserver> _map = WeakHashMap();
 
-class _CacheMapObserver with _LifecycleEventObserverWrapper {
+class _LiveCancellableManagerObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
 
-  // final Set<Cancellable> _liveCancellable = {};
+  Cancellable _makeCancellableForLive({Cancellable? other}) => _cancellable
+      .makeCancellable(infectious: false, father: other, weakRef: false);
 
-  Cancellable _makeCancellableForLive({Cancellable? other}) {
-    final cancellable = _cancellable.makeCancellable(
-        infectious: false, father: other, weakRef: false);
-
-    // if (cancellable.isAvailable) {
-    //   cancellable.whenCancel
-    //       .bindCancellable(_cancellable)
-    //       .then((_) => _liveCancellable.remove(cancellable));
-    //   _liveCancellable.add(cancellable);
-    // }
-
-    return cancellable;
-  }
-
-  _CacheMapObserver(ILifecycle lifecycle) : _cancellable = Cancellable() {
+  _LiveCancellableManagerObserver(ILifecycle lifecycle)
+      : _cancellable = Cancellable() {
     if (lifecycle is LifecycleOwner) {
       final l = lifecycle.lifecycle;
       l.addLifecycleObserver(this, fullCycle: true);
-      _cancellable.onCancel.then((value) => _map.remove(l));
+      _cancellable.onCancel.then((value) => _map.remove(lifecycle));
     } else {
       lifecycle.addLifecycleObserver(this, fullCycle: true);
       _cancellable.onCancel.then((value) => _map.remove(lifecycle));
@@ -99,7 +88,6 @@ class _CacheMapObserver with _LifecycleEventObserverWrapper {
   void onDestroy(LifecycleOwner owner) {
     super.onDestroy(owner);
     _cancellable.cancel();
-    // _liveCancellable.clear();
   }
 }
 
@@ -112,7 +100,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       return Cancellable()..cancel();
     }
     return _map
-        .putIfAbsent(this, () => _CacheMapObserver(this))
+        .putIfAbsent(this, () => _LiveCancellableManagerObserver(this))
         ._makeCancellableForLive(other: other);
   }
 

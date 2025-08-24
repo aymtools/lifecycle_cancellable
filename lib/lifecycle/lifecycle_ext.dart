@@ -68,25 +68,26 @@ final Map<ILifecycle, _LiveCancellableManagerObserver> _map = WeakHashMap();
 
 class _LiveCancellableManagerObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
+  final WeakReference<ILifecycle> _lifecycle;
 
   Cancellable _makeCancellableForLive({Cancellable? other}) => _cancellable
       .makeCancellable(infectious: false, father: other, weakRef: false);
 
   _LiveCancellableManagerObserver(ILifecycle lifecycle)
-      : _cancellable = Cancellable() {
+      : _lifecycle = WeakReference(lifecycle),
+        _cancellable = Cancellable() {
     if (lifecycle is LifecycleOwner) {
       final l = lifecycle.lifecycle;
       l.addLifecycleObserver(this, fullCycle: true);
-      _cancellable.onCancel.then((value) => _map.remove(lifecycle));
     } else {
       lifecycle.addLifecycleObserver(this, fullCycle: true);
-      _cancellable.onCancel.then((value) => _map.remove(lifecycle));
     }
   }
 
   @override
   void onDestroy(LifecycleOwner owner) {
     super.onDestroy(owner);
+    _map.remove(_lifecycle.target);
     _cancellable.cancel();
   }
 }

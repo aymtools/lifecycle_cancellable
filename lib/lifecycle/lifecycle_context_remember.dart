@@ -39,6 +39,7 @@ class _RememberDisposeObserver with LifecycleStateChangeObserver {
   final Lifecycle _lifecycle;
   final WeakReference<BuildContext> _context;
   bool _isDisposed = false;
+  final _detachKey = Object();
 
   late final Finalizer<_RememberDisposeObserver> _finalizer =
       Finalizer<_RememberDisposeObserver>(
@@ -52,7 +53,7 @@ class _RememberDisposeObserver with LifecycleStateChangeObserver {
       : _context = WeakReference(context),
         _lifecycle = lifecycle {
     _lifecycle.addLifecycleObserver(this);
-    _finalizer.attach(context, this, detach: this);
+    _finalizer.attach(context, this, detach: _detachKey);
   }
 
   @override
@@ -73,7 +74,7 @@ class _RememberDisposeObserver with LifecycleStateChangeObserver {
       disposable._safeInvokeOnDispose();
     }
     _values.clear();
-    if (callDetach) _finalizer.detach(this);
+    if (callDetach) _finalizer.detach(_detachKey);
   }
 
   T getOrCreate<T extends Object>(

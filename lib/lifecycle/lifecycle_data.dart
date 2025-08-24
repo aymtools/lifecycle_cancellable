@@ -54,17 +54,20 @@ abstract class LifecycleExtData {
 
 /// 寄存于lifecycle的数据
 class LiveExtData extends LifecycleExtData {
-  Lifecycle? _lifecycle;
+  WeakReference<Lifecycle>? _lifecycle;
 
-  LiveExtData._(this._lifecycle) : super._();
+  LiveExtData._(Lifecycle lifecycle)
+      : _lifecycle = WeakReference(lifecycle),
+        super._();
 
   /// 根据Type + key获取，如果不存在则创建信息
   T getOrPut<T extends Object>(
       {Object? key, required T Function(Lifecycle lifecycle) ifAbsent}) {
-    if (_isDestroyed) {
+    final lifecycle = _lifecycle?.target;
+    if (_isDestroyed || lifecycle == null) {
       throw Exception('extData has been destroyed.');
     }
-    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(_lifecycle!))
+    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(lifecycle))
         as T;
   }
 
@@ -77,18 +80,21 @@ class LiveExtData extends LifecycleExtData {
 
 /// 寄存于lifecycle的数据
 class LifecycleRegistryExtData extends LifecycleExtData {
-  ILifecycleRegistry? _lifecycle;
+  WeakReference<ILifecycleRegistry>? _lifecycle;
 
-  LifecycleRegistryExtData._(this._lifecycle) : super._();
+  LifecycleRegistryExtData._(ILifecycleRegistry lifecycle)
+      : _lifecycle = WeakReference(lifecycle),
+        super._();
 
   /// 根据Type + key获取，如果不存在则创建信息
   T getOrPut<T extends Object>(
       {Object? key,
       required T Function(ILifecycleRegistry lifecycle) ifAbsent}) {
-    if (_isDestroyed) {
+    final lifecycle = _lifecycle?.target;
+    if (_isDestroyed || lifecycle == null) {
       throw Exception('extData has been destroyed.');
     }
-    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(_lifecycle!))
+    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(lifecycle))
         as T;
   }
 

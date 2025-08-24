@@ -1,3 +1,7 @@
+## 2.4.2
+
+* Change the manager related to LifecycleObserver to use weak references for ILifecycle.
+
 ## 2.4.1
 
 * Add onDispose callback uniformly to rememberXXX.

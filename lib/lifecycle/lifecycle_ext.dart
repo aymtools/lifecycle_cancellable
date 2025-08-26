@@ -70,8 +70,9 @@ class _LiveCancellableManagerObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;
   final WeakReference<ILifecycle> _lifecycle;
 
-  Cancellable _makeCancellableForLive({Cancellable? other}) => _cancellable
-      .makeCancellable(infectious: false, father: other, weakRef: false);
+  Cancellable _makeCancellableForLive(Cancellable? other, bool weakRef) =>
+      _cancellable.makeCancellable(
+          infectious: false, father: other, weakRef: weakRef);
 
   _LiveCancellableManagerObserver(ILifecycle lifecycle)
       : _lifecycle = WeakReference(lifecycle),
@@ -94,7 +95,8 @@ class _LiveCancellableManagerObserver with _LifecycleEventObserverWrapper {
 
 extension LifecycleObserverRegistryCacnellable on ILifecycle {
   /// 构建一个绑定到[lifecycle]的[Cancellable]
-  Cancellable makeLiveCancellable({Cancellable? other}) {
+  /// *[weakRef] 是否是弱引用的 保持兼容性为 false 将在3.0版本改为 true
+  Cancellable makeLiveCancellable({Cancellable? other, bool weakRef = false}) {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'Must be used before destroyed.');
     if (currentLifecycleState <= LifecycleState.destroyed) {
@@ -102,7 +104,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     }
     return _map
         .putIfAbsent(this, () => _LiveCancellableManagerObserver(this))
-        ._makeCancellableForLive(other: other);
+        ._makeCancellableForLive(other, weakRef);
   }
 
   /// 当高于某个状态时执行给定的block

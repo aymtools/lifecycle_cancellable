@@ -64,7 +64,8 @@ extension LifecycleObserverRegistryMixinContextExt
       });
 }
 
-final Map<ILifecycle, _LiveCancellableManagerObserver> _map = WeakHashMap();
+final Map<ILifecycle, _LiveCancellableManagerObserver> _map =
+    WeakHashMap.identity();
 
 class _LiveCancellableManagerObserver with _LifecycleEventObserverWrapper {
   final Cancellable _cancellable;

@@ -105,7 +105,7 @@ class LifecycleRegistryExtData extends LifecycleExtData {
   }
 }
 
-final Map<Lifecycle, LiveExtData> _liveExtDataCache = WeakHashMap();
+final Map<Lifecycle, LiveExtData> _liveExtDataCache = WeakHashMap.identity();
 
 extension LifecycleTypedDataExt on Lifecycle {
   /// 获取[lifecycle]管理的扩展数据 于[destroy]时自动清理
@@ -125,7 +125,7 @@ extension LifecycleTypedDataExt on Lifecycle {
 }
 
 final Map<ILifecycleRegistry, LifecycleRegistryExtData>
-    _liveRegistryExtDataCache = WeakHashMap();
+    _liveRegistryExtDataCache = WeakHashMap.identity();
 
 extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
   /// 获取[lifecycle]管理的扩展数据 于[destroy]时自动清理

@@ -112,17 +112,17 @@ extension BuildContextLifecycleRememberExt on BuildContext {
     }
 
     final lifecycle = Lifecycle.of(this);
-    final managers =
-        lifecycle.extData.getOrPut<Map<BuildContext, _RememberDisposeObserver>>(
-            key: _keyRemember,
-            ifAbsent: (l) {
-              final result =
-                  WeakHashMap<BuildContext, _RememberDisposeObserver>();
+    final managers = lifecycle.extData.getOrPut<
+            Map<BuildContext, _RememberDisposeObserver>>(
+        key: _keyRemember,
+        ifAbsent: (l) {
+          final result =
+              WeakHashMap<BuildContext, _RememberDisposeObserver>.identity();
 
-              /// 不持有 Map，防止内存泄漏
-              lifecycle.addLifecycleObserver(MapAutoClearObserver(result));
-              return result;
-            });
+          /// 不持有 Map，防止内存泄漏
+          lifecycle.addLifecycleObserver(MapAutoClearObserver(result));
+          return result;
+        });
 
     final manager = managers.putIfAbsent(
         this, () => _RememberDisposeObserver._(this, lifecycle));

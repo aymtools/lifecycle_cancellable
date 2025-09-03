@@ -225,7 +225,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
-    Completer<T> completer = Completer();
+    Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     late final LifecycleObserver observer;
     Cancellable? checkable;
     observer = LifecycleObserver.eventAny((event) async {
@@ -478,7 +478,11 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       if (state == LifecycleState.destroyed &&
           !completer.isCompleted &&
           cancellable?.isUnavailable != true) {
-        completer.complete(block(cancellable ?? Cancellable()));
+        if (runWithDelayed) {
+          completer.complete(Future(() => block(cancellable ?? Cancellable())));
+        } else {
+          completer.complete(block(cancellable ?? Cancellable()));
+        }
       }
     });
     addLifecycleObserver(observer);
@@ -494,7 +498,11 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     final observer = LifecycleObserver.eventDestroy(() {
       if (!completer.isCompleted && cancellable?.isUnavailable != true) {
-        completer.complete(block(cancellable ?? Cancellable()));
+        if (runWithDelayed) {
+          completer.complete(Future(() => block(cancellable ?? Cancellable())));
+        } else {
+          completer.complete(block(cancellable ?? Cancellable()));
+        }
       }
     });
     addLifecycleObserver(observer);

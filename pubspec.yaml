@@ -22,11 +22,11 @@ dependencies:
   cancellable: ^2.3.0
   anlifecycle: ^3.3.0
   weak_collections: ^1.4.0
+  test: ^1.25.15
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  test: ^1.25.15
 
   flutter_lints: ^5.0.0
 

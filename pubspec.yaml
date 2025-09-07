@@ -20,7 +20,7 @@ dependencies:
     sdk: flutter
 
   cancellable: ^2.3.0
-  anlifecycle: ^3.3.0
+  anlifecycle: ^3.4.0
   weak_collections: ^1.4.0
 
 dev_dependencies:

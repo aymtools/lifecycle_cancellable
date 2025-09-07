@@ -31,7 +31,7 @@ void main() {
       expect(cancellable.isAvailable, false);
       expect(cancellable2.isAvailable, false);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.makeLiveCancellable() and father', () {
@@ -93,7 +93,7 @@ void main() {
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
       expect(called, false);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.launchWhenNextLifecycleEvent() cancel', () {
@@ -292,7 +292,7 @@ void main() {
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
       expect(called, false);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.launchWhenLifecycleStateAtLeast() cancel', () {
@@ -539,7 +539,7 @@ void main() {
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
       expect(count, 2);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.repeatOnLifecycle() runWithDelayed=true', () async {
@@ -566,7 +566,7 @@ void main() {
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
       expect(count, 2);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.repeatOnLifecycle() cancel', () {
@@ -589,7 +589,7 @@ void main() {
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
       expect(count, 1);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.repeatOnLifecycle()  block cancel run', () async {
@@ -618,7 +618,7 @@ void main() {
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
       expect(count, 1);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.repeatOnLifecycle() block cancel check', () async {
@@ -672,7 +672,7 @@ void main() {
       expect(count, 2);
       expect(countWhere, 1);
 
-      // expect(registry.observers, isEmpty);
+      expect(registry.observers, isEmpty);
     });
 
     test('.findLifecycleOwner()', () {

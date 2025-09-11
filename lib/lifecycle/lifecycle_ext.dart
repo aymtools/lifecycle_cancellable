@@ -60,6 +60,7 @@ extension LifecycleObserverRegistryMixinContextExt
         if (value is StatefulElement && value.state is S) {
           return value.state as S;
         }
+        // ignore: use_build_context_synchronously
         return Future<S>.value(value.findAncestorStateOfType<S>());
       });
 }

@@ -1,3 +1,7 @@
+## 2.4.3
+
+* Mark remember as deprecated, it will become a standalone library in the future.
+
 ## 2.4.2
 
 * Change the manager related to LifecycleObserver to use weak references for ILifecycle.

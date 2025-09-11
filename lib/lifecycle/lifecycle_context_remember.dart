@@ -97,6 +97,7 @@ class _RememberDisposeObserver with LifecycleStateChangeObserver {
 
 final _keyRemember = Object();
 
+@Deprecated('use package:remember , will remove v2.6.0')
 extension BuildContextLifecycleRememberExt on BuildContext {
   /// 以当前[context]、类型[T]和[key]为索引 记住该对象，并且以后将再次返回该对象
   /// * [factory] 和 [factory2] 如何构建这个对象，不能同时为空, [factory] 优先级高于 [factory2]

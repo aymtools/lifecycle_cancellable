@@ -58,7 +58,7 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
     _lastState = state;
   }
 
-  _dRunOnResume(LifecycleOwner owner) {
+  void _dRunOnResume(LifecycleOwner owner) {
     _firstResume = false;
     final l = owner.lifecycle;
     WidgetsBinding.instance.addPostFrameCallback((_) {

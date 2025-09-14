@@ -102,6 +102,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
   /// 以当前[context]、类型[T]和[key]为索引 记住该对象，并且以后将再次返回该对象
   /// * [factory] 和 [factory2] 如何构建这个对象，不能同时为空, [factory] 优先级高于 [factory2]
   /// * [onDispose] 定义销毁时如何处理，一定晚于[context]的[dispose],非常注意不可使用[context]相关内容
+  @Deprecated('use package:remember , will remove v2.6.0')
   T remember<T extends Object>({
     T Function()? factory,
     T Function(Lifecycle)? factory2,
@@ -133,6 +134,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
 
   /// 获取可用的TabController
   /// * [initialIndex], [animationDuration], [length], [key]任何一个参数发生变化就会产生新的 TabController
+  @Deprecated('use package:remember , will remove v2.6.0')
   TabController rememberTabController({
     int initialIndex = 0,
     Duration? animationDuration,
@@ -155,6 +157,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
 
   /// 动画控制器
   /// * 任何参数发生变化就会产生新的
+  @Deprecated('use package:remember , will remove v2.6.0')
   AnimationController rememberAnimationController({
     double? value,
     Duration? duration,
@@ -188,6 +191,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
 
   /// 动画控制器
   /// * 任何参数发生变化就会产生新的
+  @Deprecated('use package:remember , will remove v2.6.0')
   AnimationController rememberAnimationControllerUnbounded({
     double value = 0.0,
     Duration? duration,
@@ -217,6 +221,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
 
   /// 滚动控制器
   /// * 任何参数发生变化就会产生新的
+  @Deprecated('use package:remember , will remove v2.6.0')
   ScrollController rememberScrollController({
     double initialScrollOffset = 0.0,
     bool keepScrollOffset = true,
@@ -242,6 +247,7 @@ extension BuildContextLifecycleRememberExt on BuildContext {
   /// * 确定是否需要更新对象只有 type 和 key
   /// * [value]， [factory]， [factory2] 确定如何初始化的创建一个 ValueNotifier 必须有一个不能为空 不作为更新key
   /// * [listen] 当前的 Context 自动监听生成的 ValueNotifier 不作为更新key 只有首次有效 后续变化无效
+  @Deprecated('use package:remember , will remove v2.6.0')
   ValueNotifier<T> rememberValueNotifier<T>({
     T? value,
     T Function()? factory,

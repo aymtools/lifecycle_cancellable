@@ -52,18 +52,43 @@ Expando<VoidCallBack> _listenerConvert = Expando('_listenerConvert');
 
 Expando<Stream> _valueNotifierStream = Expando('_valueNotifierStream');
 
+@visibleForTesting
+class CancellableListenableCallback<T extends Listenable> {
+  final WeakReference<T> reference;
+  final void Function(T) callback;
+  final Cancellable cancellable;
+
+  CancellableListenableCallback(
+      {required T source, required this.callback, required this.cancellable})
+      : reference = WeakReference(source) {
+    cancellable.whenCancel.then((_) {
+      reference.target?.removeListener(sourceCallback);
+    });
+  }
+
+  void sourceCallback() {
+    final source = reference.target;
+    if (cancellable.isAvailable) {
+      if (source != null) {
+        callback(source);
+      }
+    }
+  }
+}
+
 extension ListenableCancellable on Listenable {
+  /// 添加 [listener], 并且当 [cancellable]执行[cancel]时自动移除[listener]
   void addCListener(Cancellable cancellable, VoidCallback listener) {
     if (cancellable.isUnavailable) return;
 
-    notifierCallback() {
-      if (cancellable.isAvailable) listener();
-    }
-
-    addListener(notifierCallback);
-    cancellable.whenCancel.then((value) => removeListener(notifierCallback));
+    final lm = CancellableListenableCallback(
+        source: this, callback: (_) => listener(), cancellable: cancellable);
+    addListener(lm.sourceCallback);
   }
 
+  /// 添加 一个唯一性的 [listener], 并且当 [cancellable]执行[cancel]时自动移除[listener],
+  /// 多次添加也只会执行一次[listener],
+  /// 默认的 [addCListener] 如果添加多次，会多次调用 [listener]
   void addCSingleListener(Cancellable cancellable, VoidCallback listener) {
     if (cancellable.isUnavailable) return;
 
@@ -87,23 +112,30 @@ extension ChangeNotifierCancellableV2<T extends ChangeNotifier> on T {
 
   /// 与lifecycle关联 当lifecycle destroy时调用dispose
   T bindLifecycle(ILifecycle lifecycle) {
-    lifecycle.addLifecycleObserver(LifecycleObserver.eventDestroy(dispose));
+    lifecycle.addLifecycleObserver(LifecycleObserver.eventDestroy(() {
+      try {
+        dispose();
+      } catch (_) {}
+    }));
     return this;
   }
 }
 
 extension ValueNotifierCancellable<T> on ValueNotifier<T> {
+  /// 添加一个 含当前值 [listener], 当 [cancellable]执行[cancel]时自动移除[listener]，
   void addCVListener(Cancellable cancellable, void Function(T value) listener) {
     if (cancellable.isUnavailable) return;
 
-    notifierCallback() {
-      if (cancellable.isAvailable) listener(value);
-    }
-
-    addListener(notifierCallback);
-    cancellable.whenCancel.then((value) => removeListener(notifierCallback));
+    late final CancellableListenableCallback<ValueNotifier<T>> lm;
+    lm = CancellableListenableCallback(
+        source: this,
+        callback: (l) => listener(l.value),
+        cancellable: cancellable);
+    addListener(lm.sourceCallback);
   }
 
+  /// 添加一个 唯一性的 含当前值[listener], 当 [cancellable]执行[cancel]时自动移除[listener]，
+  /// 多次添加也只会执行一次[listener],
   void addCSingleVListener(
       Cancellable cancellable, void Function(T value) listener) {
     if (cancellable.isUnavailable) return;
@@ -118,6 +150,8 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     sl.addListener(cancellable, l);
   }
 
+  /// 将ValueNotifier转换为一个Stream，
+  /// listen时会立即发送当前的值
   Stream<T> asStream() {
     Stream<T>? result = _valueNotifierStream[this] as Stream<T>?;
     if (result == null) {
@@ -149,16 +183,17 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
     return result;
   }
 
-  @Deprecated('use [firstWhereValue]')
+  @Deprecated('use [firstWhereValue] , will remove v2.6.0')
   Future<T> whenValue(bool Function(T value) test,
           {Cancellable? cancellable}) =>
       firstValue(test, cancellable: cancellable);
 
-  @Deprecated('use [firstWhereValue]')
+  @Deprecated('use [firstWhereValue] , will remove v2.6.0')
   Future<T> firstValue(bool Function(T value) test,
           {Cancellable? cancellable}) =>
       firstWhereValue(test, cancellable: cancellable);
 
+  /// 当value首次满足条件时触发， cancellable 取消时取消监听
   Future<T> firstWhereValue(bool Function(T value) test,
       {Cancellable? cancellable}) {
     final v = value;

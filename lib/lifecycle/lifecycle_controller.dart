@@ -113,6 +113,7 @@ extension BuildContextLifecycleWithControllerExt on BuildContext {
   // }
 
   /// 获取可用的TabController
+  @Deprecated('use package:remember')
   TabController withLifecycleTabController({
     int initialIndex = 0,
     Duration? animationDuration,
@@ -130,6 +131,7 @@ extension BuildContextLifecycleWithControllerExt on BuildContext {
       );
 
   /// 动画控制器
+  @Deprecated('use package:remember')
   AnimationController withLifecycleAnimationController({
     double? value,
     Duration? duration,
@@ -156,6 +158,7 @@ extension BuildContextLifecycleWithControllerExt on BuildContext {
   }
 
   /// 动画控制器
+  @Deprecated('use package:remember')
   AnimationController withLifecycleAnimationControllerUnbounded({
     double value = 0.0,
     Duration? duration,

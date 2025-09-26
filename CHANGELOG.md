@@ -1,3 +1,7 @@
+## 2.5.0
+
+* Add collectAsState extension function to Stream and Future.
+
 ## 2.4.3
 
 * Mark remember as deprecated, it will become a standalone library in the future.

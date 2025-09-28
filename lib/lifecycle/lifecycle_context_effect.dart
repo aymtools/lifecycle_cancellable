@@ -32,6 +32,7 @@ class _LLauncherObserver with LifecycleStateChangeObserver {
     if (state == LifecycleState.destroyed) {
       _lastState = state;
       _safeCallLauncher(launchOnDestroy, owner.lifecycle, 'launchOnDestroy');
+      _destroy();
       return;
     }
 
@@ -91,6 +92,50 @@ class _LLauncherObserver with LifecycleStateChangeObserver {
       ));
     }
   }
+
+  /// 清理所有的回调
+  void _destroy() {
+    launchOnFirstCreate = null;
+    launchOnFirstStart = null;
+    launchOnFirstResume = null;
+    launchOnDestroy = null;
+    repeatOnStarted = null;
+    repeatOnResumed = null;
+  }
+
+  void _replaceLaunchers(LLauncher? repeatOnStarted, LLauncher? repeatOnResumed,
+      LLauncher? launchOnDestroy) {
+    if (repeatOnStarted != null) {
+      this.repeatOnStarted = repeatOnStarted;
+    }
+    if (repeatOnResumed != null) {
+      this.repeatOnResumed = repeatOnResumed;
+    }
+
+    if (launchOnDestroy != null) {
+      this.launchOnDestroy = launchOnDestroy;
+    }
+  }
+
+  void _setLaunchers(
+      LLauncher? launchOnFirstCreate,
+      LLauncher? launchOnFirstStart,
+      LLauncher? launchOnFirstResume,
+      LLauncher? launchOnDestroy,
+      LLauncher? repeatOnStarted,
+      LLauncher? repeatOnResumed) {
+    this.launchOnFirstCreate = launchOnFirstCreate;
+    this.launchOnFirstStart = launchOnFirstStart;
+    this.launchOnFirstResume = launchOnFirstResume;
+    this.launchOnDestroy = launchOnDestroy;
+
+    if (repeatOnStarted != null) {
+      this.repeatOnStarted = repeatOnStarted;
+    }
+    if (repeatOnResumed != null) {
+      this.repeatOnResumed = repeatOnResumed;
+    }
+  }
 }
 
 class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
@@ -115,6 +160,7 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
     if (state == LifecycleState.destroyed) {
       _lastState = state;
       _safeCallLauncher(launchOnDestroy, owner.lifecycle, 'launchOnDestroy');
+      _destroy();
       return;
     }
 
@@ -175,29 +221,85 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
       ));
     }
   }
+
+  /// 清理所有的回调
+  void _destroy() {
+    launchOnFirstCreate = null;
+    launchOnFirstStart = null;
+    launchOnFirstResume = null;
+    launchOnDestroy = null;
+    repeatOnStarted = null;
+    repeatOnResumed = null;
+  }
+
+  void _replaceLaunchers(Launcher<T>? repeatOnStarted,
+      Launcher<T>? repeatOnResumed, Launcher<T>? launchOnDestroy) {
+    if (repeatOnStarted != null) {
+      this.repeatOnStarted = repeatOnStarted;
+    }
+    if (repeatOnResumed != null) {
+      this.repeatOnResumed = repeatOnResumed;
+    }
+    if (launchOnDestroy != null) {
+      this.launchOnDestroy = launchOnDestroy;
+    }
+  }
+
+  void _setLaunchers(
+      Launcher<T>? launchOnFirstCreate,
+      Launcher<T>? launchOnFirstStart,
+      Launcher<T>? launchOnFirstResume,
+      Launcher<T>? launchOnDestroy,
+      Launcher<T>? repeatOnStarted,
+      Launcher<T>? repeatOnResumed) {
+    this.launchOnFirstCreate = launchOnFirstCreate;
+    this.launchOnFirstStart = launchOnFirstStart;
+    this.launchOnFirstResume = launchOnFirstResume;
+    this.launchOnDestroy = launchOnDestroy;
+    if (repeatOnStarted != null) {
+      this.repeatOnStarted = repeatOnStarted;
+    }
+    if (repeatOnResumed != null) {
+      this.repeatOnResumed = repeatOnResumed;
+    }
+  }
 }
 
 final _withLifecycleKey = Object();
-// final _withLifecycleDataKey = Object();
 final _withLifecycleAndDataKey = Object();
 final _withLifecycleAndExtDataKey = Object();
 
-// class _BuildContextLifecycleWithDataKey {
-//   final Object? key;
-//
-//   _BuildContextLifecycleWithDataKey({this.key});
-//
-//   @override
-//   int get hashCode => Object.hash(_BuildContextLifecycleWithDataKey, key);
-//
-//   @override
-//   bool operator ==(Object other) {
-//     return other is _BuildContextLifecycleWithDataKey && other.key == key;
-//   }
-// }
-
 extension BuildContextLifecycleWithExt on BuildContext {
+  /// 从当前[context]生成一个绑定到[liveDate]内部的缓存数据
+  /// * [context] 销毁时自动清理
+  /// * 与 [withLifecycleAndExtDataEffect] 数据相同
+  T withLifecycleExtData<T extends Object>({
+    T Function()? factory,
+    T Function(Lifecycle lifecycle)? factory2,
+    Object? key,
+  }) {
+    final lifecycle = Lifecycle.of(this);
+    factory ??= () => factory2!(lifecycle);
+
+    final Map<BuildContext, Map<Object, Object?>> contextExtData =
+        lifecycle.extData.putIfAbsent(
+            key: _withLifecycleAndExtDataKey, ifAbsent: WeakHashMap.identity);
+
+    final data = contextExtData.putIfAbsent(this, () {
+      final result = HashMap<Object, Object?>();
+
+      /// 不持有 Map，防止内存泄漏
+      lifecycle.addLifecycleObserver(MapAutoClearObserver(result));
+      return result;
+    });
+
+    return data.putIfAbsent(key == null ? T : TypedKey<T>(key), factory) as T;
+  }
+
   /// 从当前的[Context]中获取[Lifecycle]并使用
+  /// * 多次调用时不会重复执行 [launcher]
+  /// * 如果需要传递数据请使用[withLifecycleAndDataEffect]
+  /// * [key] 用于区分不同的调用
   void withLifecycleEffect({
     LLauncher? launchOnFirstCreate,
     LLauncher? launchOnFirstStart,
@@ -205,44 +307,55 @@ extension BuildContextLifecycleWithExt on BuildContext {
     LLauncher? repeatOnStarted,
     LLauncher? repeatOnResumed,
     LLauncher? launchOnDestroy,
+    Object? key,
   }) {
+    if (key != null) {
+      final observer = withLifecycleExtData(
+        factory2: (l) {
+          final observer = _LLauncherObserver._(this);
+          observer._setLaunchers(
+              launchOnFirstCreate,
+              launchOnFirstStart,
+              launchOnFirstResume,
+              launchOnDestroy,
+              repeatOnStarted,
+              repeatOnResumed);
+          l.addLifecycleObserver(observer);
+          return observer;
+        },
+        key: key,
+      );
+
+      observer._replaceLaunchers(
+          repeatOnStarted, repeatOnResumed, launchOnDestroy);
+      return;
+    }
+
     final lifecycle = Lifecycle.of(this);
 
     final ctx = this;
 
     final cache = lifecycle.extData
         .putIfAbsent<Map<BuildContext, _LLauncherObserver>>(
-            key: _withLifecycleKey, ifAbsent: () => WeakHashMap());
+            key: _withLifecycleKey, ifAbsent: WeakHashMap.identity);
     final observer = cache.putIfAbsent(ctx, () {
       final observer = _LLauncherObserver._(ctx);
-      observer.launchOnFirstCreate = launchOnFirstCreate;
-      observer.launchOnFirstStart = launchOnFirstStart;
-      observer.launchOnFirstResume = launchOnFirstResume;
-      observer.launchOnDestroy = launchOnDestroy;
-
-      if (repeatOnStarted != null) {
-        observer.repeatOnStarted = repeatOnStarted;
-      }
-      if (repeatOnResumed != null) {
-        observer.repeatOnResumed = repeatOnResumed;
-      }
+      observer._setLaunchers(
+          launchOnFirstCreate,
+          launchOnFirstStart,
+          launchOnFirstResume,
+          launchOnDestroy,
+          repeatOnStarted,
+          repeatOnResumed);
 
       lifecycle.addObserver(observer);
-      lifecycle.addLifecycleObserver(
-          LifecycleObserver.eventDestroy(() => cache.remove(ctx)));
+      lifecycle.addLifecycleObserver(LifecycleObserver.eventDestroy(
+          () => cache.remove(observer._context.target)));
       return observer;
     });
 
-    if (repeatOnStarted != null) {
-      observer.repeatOnStarted = repeatOnStarted;
-    }
-    if (repeatOnResumed != null) {
-      observer.repeatOnResumed = repeatOnResumed;
-    }
-
-    if (launchOnDestroy != null) {
-      observer.launchOnDestroy = launchOnDestroy;
-    }
+    observer._replaceLaunchers(
+        repeatOnStarted, repeatOnResumed, launchOnDestroy);
   }
 
   /// 从当前的[Context]中获取[Lifecycle]使用 并且data 同属于 key的一部分
@@ -272,63 +385,6 @@ extension BuildContextLifecycleWithExt on BuildContext {
         launchOnDestroy: launchOnDestroy,
         key: key,
       );
-
-  // {
-  //   assert(data != null || factory != null || factory2 != null,
-  //       'data and factory and factory2 cannot be null at the same time');
-  //
-  //   data ??= factory?.call();
-  //
-  //   final lifecycle = Lifecycle.of(this);
-  //
-  //   data ??= factory2?.call(lifecycle);
-  //
-  //   if (data == null) {
-  //     throw 'data and factory and factory2 cannot be null at the same time';
-  //   }
-  //
-  //   final ctx = this;
-  //   final d = data;
-  //
-  //   final cache = lifecycle.extData
-  //       .putIfAbsent<Map<BuildContext, Map<Object, _DLauncherObserver>>>(
-  //           key: key == null
-  //               ? _withLifecycleDataKey
-  //               : _BuildContextLifecycleWithDataKey(key: key),
-  //           ifAbsent: () => WeakHashMap());
-  //
-  //   final cache2 =
-  //       cache.putIfAbsent(ctx, () => HashMap<Object, _DLauncherObserver>());
-  //   final observer = cache2.putIfAbsent(d, () {
-  //     final observer = _DLauncherObserver<T>._(ctx, d);
-  //     observer.launchOnFirstCreate = launchOnFirstCreate;
-  //     observer.launchOnFirstStart = launchOnFirstStart;
-  //     observer.launchOnFirstResume = launchOnFirstResume;
-  //     observer.launchOnDestroy = launchOnDestroy;
-  //     if (repeatOnStarted != null) {
-  //       observer._repeatOn[LifecycleState.started] = repeatOnStarted;
-  //     }
-  //     if (repeatOnResumed != null) {
-  //       observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
-  //     }
-  //
-  //     lifecycle.addObserver(observer);
-  //     lifecycle.addLifecycleObserver(
-  //         LifecycleObserver.eventDestroy(() => cache2.remove(d)));
-  //     return observer;
-  //   }) as _DLauncherObserver<T>;
-  //
-  //   if (repeatOnStarted != null) {
-  //     observer._repeatOn[LifecycleState.started] = repeatOnStarted;
-  //   }
-  //   if (repeatOnResumed != null) {
-  //     observer._repeatOn[LifecycleState.resumed] = repeatOnResumed;
-  //   }
-  //   if (launchOnDestroy != null) {
-  //     observer.launchOnDestroy = launchOnDestroy;
-  //   }
-  //   return data;
-  // }
 
   /// 从当前的[Context]中获取[Lifecycle]使用 并且data 同属于 key的一部分
   /// * 如果使用[factory],[factory2] 则必须保证多次调用时返回同一值 否则将会视为新建
@@ -362,7 +418,7 @@ extension BuildContextLifecycleWithExt on BuildContext {
 
     final cache = lifecycle.extData
         .putIfAbsent<Map<BuildContext, Map<Object, _DLauncherObserver>>>(
-            key: _withLifecycleAndDataKey, ifAbsent: () => WeakHashMap());
+            key: _withLifecycleAndDataKey, ifAbsent: WeakHashMap.identity);
 
     final cache2 = cache.putIfAbsent(ctx, () {
       final result = HashMap<Object, _DLauncherObserver>();
@@ -373,57 +429,21 @@ extension BuildContextLifecycleWithExt on BuildContext {
     final observer =
         cache2.putIfAbsent(key == null ? d : _LifecycleAndDataKey(d, key), () {
       final observer = _DLauncherObserver<T>._(ctx, d);
-      observer.launchOnFirstCreate = launchOnFirstCreate;
-      observer.launchOnFirstStart = launchOnFirstStart;
-      observer.launchOnFirstResume = launchOnFirstResume;
-      observer.launchOnDestroy = launchOnDestroy;
-      if (repeatOnStarted != null) {
-        observer.repeatOnStarted = repeatOnStarted;
-      }
-      if (repeatOnResumed != null) {
-        observer.repeatOnResumed = repeatOnResumed;
-      }
+      observer._setLaunchers(
+          launchOnFirstCreate,
+          launchOnFirstStart,
+          launchOnFirstResume,
+          launchOnDestroy,
+          repeatOnStarted,
+          repeatOnResumed);
 
       lifecycle.addObserver(observer);
       return observer;
     }) as _DLauncherObserver<T>;
 
-    if (repeatOnStarted != null) {
-      observer.repeatOnStarted = repeatOnStarted;
-    }
-    if (repeatOnResumed != null) {
-      observer.repeatOnResumed = repeatOnResumed;
-    }
-    if (launchOnDestroy != null) {
-      observer.launchOnDestroy = launchOnDestroy;
-    }
+    observer._replaceLaunchers(
+        repeatOnStarted, repeatOnResumed, launchOnDestroy);
     return data;
-  }
-
-  /// 从当前[context]生成一个绑定到[liveDate]内部的缓存数据
-  /// * [context] 销毁时自动清理
-  /// * 与 [withLifecycleAndExtDataEffect] 数据相同
-  T withLifecycleExtData<T extends Object>({
-    T Function()? factory,
-    T Function(Lifecycle lifecycle)? factory2,
-    Object? key,
-  }) {
-    final lifecycle = Lifecycle.of(this);
-    factory ??= () => factory2!(lifecycle);
-
-    final Map<BuildContext, Map<Object, Object?>> contextExtData =
-        lifecycle.extData.putIfAbsent(
-            key: _withLifecycleAndExtDataKey, ifAbsent: WeakHashMap.new);
-
-    final data = contextExtData.putIfAbsent(this, () {
-      final result = HashMap<Object, Object?>();
-
-      /// 不持有 Map，防止内存泄漏
-      lifecycle.addLifecycleObserver(MapAutoClearObserver(result));
-      return result;
-    });
-
-    return data.putIfAbsent(key == null ? T : TypedKey<T>(key), factory) as T;
   }
 
   /// 从当前[context]生成一个绑定到[liveDate]内部的缓存数据 并提供生命周期的相关函数

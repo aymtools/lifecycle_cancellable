@@ -1,6 +1,7 @@
 ## 2.5.0
 
 * Add collectAsState extension function to Stream and Future.
+* Added a key parameter to withLifecycleEffect.
 
 ## 2.4.3
 

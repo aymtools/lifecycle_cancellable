@@ -528,7 +528,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 
   Future<Cancellable> whenLifecycleStateResumed(
           {bool runWithDelayed = true, Cancellable? cancellable}) =>
-      whenLifecycleStateAtLeast(LifecycleState.started,
+      whenLifecycleStateAtLeast(LifecycleState.resumed,
           runWithDelayed: runWithDelayed, cancellable: cancellable);
 
   Future<Cancellable> whenLifecycleNextEvent(LifecycleEvent event,

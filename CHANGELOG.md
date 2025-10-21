@@ -1,3 +1,7 @@
+## 2.5.1
+
+* Fixed a bug in the Lifecycle.whenLifecycleStateResumed function
+
 ## 2.5.0
 
 * Add collectAsState extension function to Stream and Future.

@@ -285,71 +285,91 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
-    if (runWithDelayed == true && currentLifecycleState >= targetState) {
-      Cancellable checkable = makeLiveCancellable(other: cancellable);
-      if (checkable.isUnavailable) {
-        return Completer<T>().future;
-      }
-      var result = block(checkable);
-      if (result is Future<T>) {
-        late final LifecycleObserver observer;
-        observer = LifecycleObserver.stateChange((state) {
-          if (state < targetState && checkable.isAvailable == true) {
-            checkable.cancel();
-            removeLifecycleObserver(observer, fullCycle: false);
+    Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
+
+    late final LifecycleObserver observer;
+
+    void runBlock(Cancellable checkable) async {
+      try {
+        if (runWithDelayed) {
+          await Future.delayed(Duration.zero);
+        }
+        if (checkable.isUnavailable) {
+          removeLifecycleObserver(observer, fullCycle: false);
+          return;
+        }
+        checkable.whenCancel.then(
+            (value) => removeLifecycleObserver(observer, fullCycle: false));
+
+        final result = block(checkable);
+        if (result is Future<T>) {
+          await Future.delayed(Duration.zero);
+          if (checkable.isAvailable == true) {
+            final r = await result;
+            if (checkable.isAvailable == true && !completer.isCompleted) {
+              completer.complete(r);
+            }
           }
-        });
-        addLifecycleObserver(observer,
-            fullCycle: true, startWith: currentLifecycleState);
-        result.whenComplete(
-            () => removeLifecycleObserver(observer, fullCycle: false));
-        return result;
-      } else {
-        return Future.sync(() => result);
+        } else {
+          completer.complete(result);
+        }
+      } catch (error, stackTree) {
+        if (error != checkable.reasonAsException && !completer.isCompleted) {
+          completer.completeError(error, stackTree);
+        }
       }
     }
 
-    Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
+    // if (runWithDelayed == true && currentLifecycleState >= targetState) {
+    //   Cancellable checkable = makeLiveCancellable(other: cancellable);
+    //   if (checkable.isUnavailable) {
+    //     return Completer<T>().future;
+    //   }
+    //   var result = block(checkable);
+    //   if (result is Future<T>) {
+    //     late final LifecycleObserver observer;
+    //     observer = LifecycleObserver.stateChange((state) {
+    //       if (state < targetState && checkable.isAvailable == true) {
+    //         checkable.cancel();
+    //         removeLifecycleObserver(observer, fullCycle: false);
+    //       }
+    //     });
+    //     addLifecycleObserver(observer,
+    //         fullCycle: true, startWith: currentLifecycleState);
+    //     result.whenComplete(
+    //         () => removeLifecycleObserver(observer, fullCycle: false));
+    //     return result;
+    //   } else {
+    //     return Future.sync(() => result);
+    //   }
+    // }
 
     Cancellable? checkable;
-    late final LifecycleObserver observer;
-    observer = LifecycleObserver.stateChange((state) async {
-      if (state >= targetState && checkable == null) {
-        checkable = makeLiveCancellable(other: cancellable);
-        try {
-          if (runWithDelayed) {
-            await Future.delayed(Duration.zero);
-          }
-          if (checkable!.isUnavailable) {
-            removeLifecycleObserver(observer, fullCycle: false);
-            return;
-          }
-          checkable!.whenCancel.then(
-              (value) => removeLifecycleObserver(observer, fullCycle: false));
 
-          final result = block(checkable!);
-          if (result is Future<T>) {
-            await Future.delayed(Duration.zero);
-            if (checkable?.isAvailable == true) {
-              final r = await result;
-              if (checkable?.isAvailable == true && !completer.isCompleted) {
-                completer.complete(r);
-              }
-            }
-          } else {
-            completer.complete(result);
-          }
-        } catch (error, stackTree) {
-          if (error != checkable?.reasonAsException && !completer.isCompleted) {
-            completer.completeError(error, stackTree);
-          }
+    if (currentLifecycleState >= targetState) {
+      final liveable = makeLiveCancellable(other: cancellable);
+      checkable = liveable;
+      observer = LifecycleObserver.stateChange((state) {
+        if (state < targetState && liveable.isAvailable == true) {
+          liveable.cancel();
+          removeLifecycleObserver(observer, fullCycle: false);
         }
-      } else if (state < targetState && checkable?.isAvailable == true) {
-        checkable?.cancel();
-      }
-    });
+      });
+      addLifecycleObserver(observer,
+          fullCycle: true, startWith: currentLifecycleState);
+      runBlock(liveable);
+    } else {
+      observer = LifecycleObserver.stateChange((state) async {
+        if (state >= targetState && checkable == null) {
+          checkable = makeLiveCancellable(other: cancellable);
+          runBlock(checkable!);
+        } else if (state < targetState && checkable?.isAvailable == true) {
+          checkable?.cancel();
+        }
+      });
+      addLifecycleObserver(observer, fullCycle: true);
+    }
 
-    addLifecycleObserver(observer, fullCycle: true);
     final result = completer.future;
     result.whenComplete(
         () => removeLifecycleObserver(observer, fullCycle: false));

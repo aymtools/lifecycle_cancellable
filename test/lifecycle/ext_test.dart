@@ -34,11 +34,22 @@ void main() {
       expect(registry.observers, isEmpty);
     });
 
-    test('.makeLiveCancellable() and father', () {
+    test('.makeLiveCancellable() and other', () {
       final cancellable = Cancellable();
       final liveCancellable = lifecycle.makeLiveCancellable(other: cancellable);
       expect(cancellable.isAvailable, true);
       expect(liveCancellable.isAvailable, true);
+      cancellable.cancel();
+      expect(cancellable.isAvailable, false);
+      expect(liveCancellable.isAvailable, false);
+      registry.handleLifecycleEvent(LifecycleEvent.destroy);
+      expect(cancellable.isAvailable, false);
+    });
+    test('.makeLiveCancellable() and other.cancelled', () {
+      final cancellable = Cancellable.cancelled();
+      final liveCancellable = lifecycle.makeLiveCancellable(other: cancellable);
+      expect(cancellable.isAvailable, false);
+      expect(liveCancellable.isAvailable, false);
       cancellable.cancel();
       expect(cancellable.isAvailable, false);
       expect(liveCancellable.isAvailable, false);

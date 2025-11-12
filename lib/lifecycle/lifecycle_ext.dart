@@ -175,19 +175,20 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
           (checkable == null || checkable?.isUnavailable == true)) {
-        checkable = makeLiveCancellable(other: cancellable);
+        final able = makeLiveCancellable(other: cancellable);
+        checkable = able;
         try {
           if (runWithDelayed) {
             //转到下一个事件循环，可以过滤掉连续的状态变化
             await Future.delayed(Duration.zero);
           }
-          if (checkable!.isUnavailable) return;
-          final result = block(checkable!);
+          if (able.isUnavailable) return;
+          final result = block(able);
           if (result is Future<T>) {
             await Future.delayed(Duration.zero);
-            if (checkable?.isAvailable == true) {
+            if (able.isAvailable == true) {
               final r = await result;
-              if (checkable?.isAvailable == true) controller.add(r);
+              if (able.isAvailable == true) controller.add(r);
             }
           } else {
             controller.add(result);
@@ -232,24 +233,25 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     Cancellable? checkable;
     observer = LifecycleObserver.eventAny((event) async {
       if (event == targetEvent && checkable == null) {
-        checkable = makeLiveCancellable(other: cancellable);
+        final able = makeLiveCancellable(other: cancellable);
+        checkable = able;
         try {
           if (runWithDelayed) {
             await Future.delayed(Duration.zero);
           }
-          if (checkable!.isUnavailable) {
-            removeLifecycleObserver(observer, fullCycle: false);
+          if (able.isUnavailable) {
+            // removeLifecycleObserver(observer, fullCycle: false);
             return;
           }
-          checkable!.whenCancel.then(
+          able.whenCancel.then(
               (value) => removeLifecycleObserver(observer, fullCycle: false));
 
-          final result = block(checkable!);
+          final result = block(able);
           if (result is Future<T>) {
             await Future.delayed(Duration.zero);
-            if (checkable?.isAvailable == true) {
+            if (able.isAvailable == true) {
               final r = await result;
-              if (checkable?.isAvailable == true && !completer.isCompleted) {
+              if (able.isAvailable == true && !completer.isCompleted) {
                 completer.complete(r);
               }
             }
@@ -263,6 +265,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
         }
       } else if (checkable?.isAvailable == true) {
         checkable?.cancel();
+        checkable = null;
       }
     });
 
@@ -295,7 +298,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
           await Future.delayed(Duration.zero);
         }
         if (checkable.isUnavailable) {
-          removeLifecycleObserver(observer, fullCycle: false);
+          // removeLifecycleObserver(observer, fullCycle: false);
           return;
         }
         checkable.whenCancel.then(
@@ -346,7 +349,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 
     Cancellable? checkable;
 
-    if (currentLifecycleState >= targetState) {
+    if (currentLifecycleState >= targetState && !runWithDelayed) {
       final liveable = makeLiveCancellable(other: cancellable);
       checkable = liveable;
       observer = LifecycleObserver.stateChange((state) {
@@ -365,6 +368,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
           runBlock(checkable!);
         } else if (state < targetState && checkable?.isAvailable == true) {
           checkable?.cancel();
+          checkable = null;
         }
       });
       addLifecycleObserver(observer, fullCycle: true);

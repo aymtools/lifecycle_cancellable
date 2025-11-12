@@ -147,6 +147,32 @@ void main() {
       expect(called, true);
     });
 
+    test('.launchWhenNextLifecycleEvent() currStateAtLast runWithDelayed=true',
+        () async {
+      var called = 0;
+      lifecycle.launchWhenNextLifecycleEvent(
+          targetEvent: LifecycleEvent.start,
+          runWithDelayed: true,
+          block: (_) => called++);
+
+      registry.handleLifecycleEvent(LifecycleEvent.start);
+      expect(called, 0);
+      registry.handleLifecycleEvent(LifecycleEvent.stop);
+      expect(called, 0);
+      await Future.delayed(Duration.zero);
+      expect(called, 0);
+      registry.handleLifecycleEvent(LifecycleEvent.start);
+      expect(called, 0);
+      await Future.delayed(Duration.zero);
+      expect(called, 1);
+      registry.handleLifecycleEvent(LifecycleEvent.stop);
+      expect(called, 1);
+      registry.handleLifecycleEvent(LifecycleEvent.start);
+      expect(called, 1);
+      await Future.delayed(Duration.zero);
+      expect(called, 1);
+    });
+
     test('.launchWhenNextLifecycleEvent() block cancellable.cancel()', () {
       var called = 0;
       lifecycle.launchWhenNextLifecycleEvent(
@@ -344,6 +370,33 @@ void main() {
       expect(called, false);
       await Future.delayed(Duration.zero);
       expect(called, true);
+    });
+
+    test(
+        '.launchWhenLifecycleStateAtLeast() currStateAtLast runWithDelayed=true',
+        () async {
+      var called = 0;
+      lifecycle.launchWhenLifecycleStateAtLeast(
+          targetState: LifecycleState.started,
+          runWithDelayed: true,
+          block: (_) => called++);
+
+      registry.handleLifecycleEvent(LifecycleEvent.start);
+      expect(called, 0);
+      registry.handleLifecycleEvent(LifecycleEvent.stop);
+      expect(called, 0);
+      await Future.delayed(Duration.zero);
+      expect(called, 0);
+      registry.handleLifecycleEvent(LifecycleEvent.start);
+      expect(called, 0);
+      await Future.delayed(Duration.zero);
+      expect(called, 1);
+      registry.handleLifecycleEvent(LifecycleEvent.stop);
+      expect(called, 1);
+      registry.handleLifecycleEvent(LifecycleEvent.start);
+      expect(called, 1);
+      await Future.delayed(Duration.zero);
+      expect(called, 1);
     });
 
     test('.launchWhenLifecycleStateAtLeast() block cancellable.cancel()', () {

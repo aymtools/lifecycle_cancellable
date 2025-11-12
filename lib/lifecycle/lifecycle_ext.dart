@@ -101,7 +101,8 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
   Cancellable makeLiveCancellable({Cancellable? other, bool weakRef = false}) {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'Must be used before destroyed.');
-    if (currentLifecycleState <= LifecycleState.destroyed) {
+    if (currentLifecycleState <= LifecycleState.destroyed ||
+        other?.isUnavailable == true) {
       return Cancellable()..cancel();
     }
     return _map

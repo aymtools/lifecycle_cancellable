@@ -1,5 +1,9 @@
 ## 2.5.1
 
+* ILifecycle.makeLiveCancellable adds availability check for other.
+
+## 2.5.1
+
 * Fixed a bug in the Lifecycle.whenLifecycleStateResumed function
 
 ## 2.5.0

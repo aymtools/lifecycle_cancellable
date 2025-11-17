@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:an_lifecycle_cancellable/listenable/value_notifier.dart';
+import 'package:an_lifecycle_cancellable/src/listenable/value_notifier.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/widgets.dart';
 

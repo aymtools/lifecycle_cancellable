@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:an_lifecycle_cancellable/key/key.dart';
-import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_controller.dart';
-import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_data.dart';
-import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_ext.dart';
-import 'package:an_lifecycle_cancellable/listenable/change_notifier_ext.dart';
-import 'package:an_lifecycle_cancellable/listenable/value_notifier.dart';
-import 'package:an_lifecycle_cancellable/tools/weak_map_clear.dart';
+import 'package:an_lifecycle_cancellable/src/key/key.dart';
+import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_controller.dart';
+import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_data.dart';
+import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_ext.dart';
+import 'package:an_lifecycle_cancellable/src/listenable/change_notifier_ext.dart';
+import 'package:an_lifecycle_cancellable/src/listenable/value_notifier.dart';
+import 'package:an_lifecycle_cancellable/src/tools/weak_map_clear.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/material.dart';
 import 'package:weak_collections/weak_collections.dart';

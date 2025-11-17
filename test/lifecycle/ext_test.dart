@@ -282,6 +282,42 @@ void main() {
       expect(check, true);
     });
 
+    test('.launchWhenLifecycleEventDestroy() currState=Destroyed', () {
+      var called = false;
+      var check = true;
+
+      registry.handleLifecycleEvent(LifecycleEvent.destroy);
+      lifecycle.launchWhenLifecycleEventDestroy(block: (cancellable) {
+        called = true;
+        check = cancellable.isAvailable;
+      });
+
+      expect(called, true);
+      expect(check, true);
+    });
+
+    test(
+        '.launchWhenLifecycleEventDestroy() currState=Destroyed runWithDelayed=true',
+        () async {
+      var called = false;
+      var check = true;
+
+      registry.handleLifecycleEvent(LifecycleEvent.destroy);
+      lifecycle.launchWhenLifecycleEventDestroy(
+        runWithDelayed: true,
+        block: (cancellable) {
+          called = true;
+          check = cancellable.isAvailable;
+        },
+      );
+
+      expect(called, false);
+      expect(check, true);
+      await Future.delayed(Duration.zero);
+      expect(called, true);
+      expect(check, true);
+    });
+
     test('.launchWhenLifecycleStateAtLeast()', () {
       var called = false;
       lifecycle.launchWhenLifecycleStateAtLeast(
@@ -500,6 +536,42 @@ void main() {
       expect(called, false);
       expect(check, true);
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
+      expect(called, false);
+      expect(check, true);
+      await Future.delayed(Duration.zero);
+      expect(called, true);
+      expect(check, true);
+    });
+
+    test('.launchWhenLifecycleStateDestroyed() currState=Destroyed', () {
+      var called = false;
+      var check = true;
+
+      registry.handleLifecycleEvent(LifecycleEvent.destroy);
+      lifecycle.launchWhenLifecycleStateDestroyed(block: (cancellable) {
+        called = true;
+        check = cancellable.isAvailable;
+      });
+
+      expect(called, true);
+      expect(check, true);
+    });
+
+    test(
+        '.launchWhenLifecycleStateDestroyed() currState=Destroyed runWithDelayed=true',
+        () async {
+      var called = false;
+      var check = true;
+
+      registry.handleLifecycleEvent(LifecycleEvent.destroy);
+      lifecycle.launchWhenLifecycleStateDestroyed(
+        runWithDelayed: true,
+        block: (cancellable) {
+          called = true;
+          check = cancellable.isAvailable;
+        },
+      );
+
       expect(called, false);
       expect(check, true);
       await Future.delayed(Duration.zero);

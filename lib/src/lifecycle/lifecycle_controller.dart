@@ -1,6 +1,6 @@
-import 'package:an_lifecycle_cancellable/key/key.dart';
-import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_context_effect.dart';
-import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_data.dart';
+import 'package:an_lifecycle_cancellable/src/key/key.dart';
+import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_context_effect.dart';
+import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_data.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

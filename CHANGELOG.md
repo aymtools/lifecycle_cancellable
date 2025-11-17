@@ -6,6 +6,7 @@
 ### Breaking Changes
 
 * context.remember has been removed.
+* Adjust the project structure and move it into src.
 
 ## 2.5.3
 

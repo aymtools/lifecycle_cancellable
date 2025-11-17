@@ -1,10 +1,9 @@
 import 'dart:ui';
 
+import 'package:an_lifecycle_cancellable/src/dialog/navigator_ext.dart';
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'navigator_ext.dart';
 
 Future<T?> showCDialog<T>({
   required BuildContext context,

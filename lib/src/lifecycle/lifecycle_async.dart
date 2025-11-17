@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_ext.dart';
+import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_ext.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
 

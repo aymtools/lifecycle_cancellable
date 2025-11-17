@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:an_lifecycle_cancellable/tools/weak_map_clear.dart';
+import 'package:an_lifecycle_cancellable/src/tools/weak_map_clear.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';

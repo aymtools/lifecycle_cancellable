@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:an_lifecycle_cancellable/lifecycle/lifecycle_data.dart';
+import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_data.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';

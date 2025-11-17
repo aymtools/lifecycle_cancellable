@@ -1,10 +1,9 @@
 import 'dart:ui';
 
+import 'package:an_lifecycle_cancellable/src/dialog/dialog_ext.dart' as d;
 import 'package:cancellable/cancellable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'dialog_ext.dart' as d;
 
 extension BuildContextDialogCancellable on BuildContext {
   ///

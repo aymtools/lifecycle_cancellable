@@ -1,3 +1,12 @@
+## 2.6.0
+
+* When runWithDelayed = true, the block in ILifecycle.launchWhenLifecycleStateAtLeast is guaranteed
+  to run.
+
+### Breaking Changes
+
+* context.remember has been removed.
+
 ## 2.5.3
 
 * ILifecycle.makeLiveCancellable removed the assert that checked for states greater than

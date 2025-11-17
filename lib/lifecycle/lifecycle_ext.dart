@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:cancellable/cancellable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';
 
@@ -99,7 +100,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
   /// 构建一个绑定到[lifecycle]的[Cancellable]
   /// *[weakRef] 是否是弱引用的 保持兼容性为 false 将在3.0版本改为 true
   Cancellable makeLiveCancellable({Cancellable? other, bool weakRef = false}) {
-    // 不在需要进行断言 destroy 时自动返回一个已经cancel的cancellable
+    // 不在需要进行断言 destroy 时返回一个已经cancel的cancellable
     // assert(currentLifecycleState > LifecycleState.destroyed,
     //     'Must be used before destroyed.');
     if (currentLifecycleState <= LifecycleState.destroyed ||
@@ -119,7 +120,10 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       bool ignoreBlockError = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
-    if (cancellable?.isUnavailable == true) return;
+    if (currentLifecycleState == LifecycleState.destroyed ||
+        cancellable?.isUnavailable == true) {
+      return;
+    }
     Cancellable? checkable;
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
@@ -167,7 +171,10 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       bool ignoreBlockError = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
-    if (cancellable?.isUnavailable == true) return Stream<T>.empty();
+    if (currentLifecycleState == LifecycleState.destroyed ||
+        cancellable?.isUnavailable == true) {
+      return Stream<T>.empty();
+    }
 
     StreamController<T> controller = StreamController();
     controller.bindCancellable(makeLiveCancellable(other: cancellable));
@@ -229,6 +236,14 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
+    assert(targetEvent != LifecycleEvent.destroy,
+        'must use launchWhenLifecycleEventDestroy');
+
+    if (currentLifecycleState == LifecycleState.destroyed ||
+        cancellable?.isUnavailable == true) {
+      return Completer<T>().future;
+    }
+
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     late final LifecycleObserver observer;
     Cancellable? checkable;
@@ -289,6 +304,13 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
+    assert(targetState > LifecycleState.initialized,
+        'must use launchWhenLifecycleStateDestroyed');
+    if (currentLifecycleState == LifecycleState.destroyed ||
+        cancellable?.isUnavailable == true) {
+      return Completer<T>().future;
+    }
+
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
 
     late final LifecycleObserver observer;
@@ -500,6 +522,26 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       {bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
+    if (cancellable?.isUnavailable == true) {
+      return Completer<T>().future;
+    }
+    if (currentLifecycleState == LifecycleState.destroyed) {
+      if (runWithDelayed) {
+        return Future.delayed(Duration.zero)
+            .then((value) => block(cancellable ?? Cancellable()));
+      } else {
+        try {
+          final result = block(cancellable ?? Cancellable());
+          if (result is Future<T>) {
+            return result;
+          }
+          return SynchronousFuture(result);
+        } catch (e, st) {
+          return Future.error(e, st);
+        }
+      }
+    }
+
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     final observer = LifecycleObserver.stateChange((state) {
       if (state == LifecycleState.destroyed &&
@@ -522,6 +564,26 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       {bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
+    if (cancellable?.isUnavailable == true) {
+      return Completer<T>().future;
+    }
+    if (currentLifecycleState == LifecycleState.destroyed) {
+      if (runWithDelayed) {
+        return Future.delayed(Duration.zero)
+            .then((value) => block(cancellable ?? Cancellable()));
+      } else {
+        try {
+          final result = block(cancellable ?? Cancellable());
+          if (result is Future<T>) {
+            return result;
+          }
+          return SynchronousFuture(result);
+        } catch (e, st) {
+          return Future.error(e, st);
+        }
+      }
+    }
+
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     final observer = LifecycleObserver.eventDestroy(() {
       if (!completer.isCompleted && cancellable?.isUnavailable != true) {

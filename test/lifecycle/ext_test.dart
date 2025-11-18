@@ -623,7 +623,8 @@ void main() {
       expect(called, false);
       cancellable.cancel();
 
-      expect(registry.observers, isEmpty);
+      expect(registry.observers.length, 1,
+          reason: 'has LiveCancellableManagerObserver');
       registry.handleLifecycleEvent(LifecycleEvent.resume);
       expect(called, false);
     });

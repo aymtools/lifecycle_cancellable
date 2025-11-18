@@ -124,11 +124,23 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
         cancellable?.isUnavailable == true) {
       return;
     }
+    assert(targetState > LifecycleState.destroyed,
+        'use launchWhenLifecycleStateDestroyed');
+    if (targetState < LifecycleState.created) {
+      launchWhenLifecycleStateDestroyed(
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+      return;
+    }
+    final liveable = makeLiveCancellable(other: cancellable);
+
     Cancellable? checkable;
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
+          liveable.isAvailable &&
           (checkable == null || checkable?.isUnavailable == true)) {
-        final able = makeLiveCancellable(other: cancellable);
+        final able = liveable.makeCancellable();
         checkable = able;
         try {
           if (runWithDelayed) {
@@ -176,14 +188,28 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       return Stream<T>.empty();
     }
 
+    assert(targetState > LifecycleState.destroyed,
+        'use launchWhenLifecycleStateDestroyed');
+
+    final liveable = makeLiveCancellable(other: cancellable);
     StreamController<T> controller = StreamController();
-    controller.bindCancellable(makeLiveCancellable(other: cancellable));
+    controller.bindCancellable(liveable);
+
+    if (targetState < LifecycleState.created) {
+      launchWhenLifecycleStateDestroyed(
+              runWithDelayed: runWithDelayed,
+              cancellable: cancellable,
+              block: block)
+          .then(controller.add)
+          .catchError(controller.addError);
+      return controller.stream;
+    }
 
     Cancellable? checkable;
     final observer = LifecycleObserver.stateChange((state) async {
       if (state >= targetState &&
           (checkable == null || checkable?.isUnavailable == true)) {
-        final able = makeLiveCancellable(other: cancellable);
+        final able = liveable.makeCancellable();
         checkable = able;
         try {
           if (runWithDelayed) {
@@ -244,12 +270,13 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       return Completer<T>().future;
     }
 
+    final liveable = makeLiveCancellable();
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     late final LifecycleObserver observer;
     Cancellable? checkable;
     observer = LifecycleObserver.eventAny((event) async {
-      if (event == targetEvent && checkable == null) {
-        final able = makeLiveCancellable(other: cancellable);
+      if (event == targetEvent && liveable.isAvailable && checkable == null) {
+        final able = liveable.makeCancellable(father: cancellable);
         checkable = able;
         try {
           if (runWithDelayed) {
@@ -311,8 +338,8 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       return Completer<T>().future;
     }
 
+    final liveable = makeLiveCancellable();
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
-
     late final LifecycleObserver observer;
 
     void runBlock(Cancellable checkable) async {
@@ -372,9 +399,11 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
 
     Cancellable? checkable;
 
-    if (currentLifecycleState >= targetState && !runWithDelayed) {
-      final liveable = makeLiveCancellable(other: cancellable);
-      checkable = liveable;
+    if (currentLifecycleState >= targetState &&
+        liveable.isAvailable &&
+        !runWithDelayed) {
+      final c = liveable.makeCancellable(father: checkable);
+      checkable = c;
       observer = LifecycleObserver.stateChange((state) {
         if (state < targetState && liveable.isAvailable == true) {
           liveable.cancel();
@@ -386,8 +415,8 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       runBlock(liveable);
     } else {
       observer = LifecycleObserver.stateChange((state) async {
-        if (state >= targetState && checkable == null) {
-          checkable = makeLiveCancellable(other: cancellable);
+        if (state >= targetState && liveable.isAvailable && checkable == null) {
+          checkable = liveable.makeCancellable(father: checkable);
           runBlock(checkable!);
         } else if (state < targetState && checkable?.isAvailable == true) {
           checkable?.cancel();

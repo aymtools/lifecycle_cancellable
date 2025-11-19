@@ -103,6 +103,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     // 不在需要进行断言 destroy 时返回一个已经cancel的cancellable
     // assert(currentLifecycleState > LifecycleState.destroyed,
     //     'Must be used before destroyed.');
+    //  放开assert允许当前已经销毁的状态下 直接返回一个 cancelled的
     if (currentLifecycleState <= LifecycleState.destroyed ||
         other?.isUnavailable == true) {
       return Cancellable()..cancel();
@@ -124,16 +125,21 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
         cancellable?.isUnavailable == true) {
       return;
     }
-    assert(targetState > LifecycleState.destroyed,
-        'use launchWhenLifecycleStateDestroyed');
+
+    /// 调用一下makeLiveCancellable 保证makeLiveCancellable 一定会在observer之前生成
+    final liveable = makeLiveCancellable(other: cancellable);
+
+    assert(targetState > LifecycleState.initialized,
+        'targetState must be greater than initialized');
     if (targetState < LifecycleState.created) {
-      launchWhenLifecycleStateDestroyed(
-          runWithDelayed: runWithDelayed,
-          cancellable: cancellable,
-          block: block);
+      launchWhenLifecycleStateAtLeast(
+        targetState: LifecycleState.created,
+        runWithDelayed: runWithDelayed,
+        cancellable: cancellable,
+        block: block,
+      );
       return;
     }
-    final liveable = makeLiveCancellable(other: cancellable);
 
     Cancellable? checkable;
     final observer = LifecycleObserver.stateChange((state) async {
@@ -169,8 +175,14 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       }
     });
     addLifecycleObserver(observer, fullCycle: true);
-    cancellable?.onCancel
-        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    if (this is LifecycleRegistryState) {
+      /// 由于代管理者会直接销毁 需要特殊处理
+      liveable.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    } else {
+      cancellable?.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    }
   }
 
   ///当高于某个状态时执行给定的block,并将结果收集起来为Stream
@@ -189,19 +201,21 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     }
 
     assert(targetState > LifecycleState.destroyed,
-        'use launchWhenLifecycleStateDestroyed');
+        'targetState must be greater than initialized');
 
+    /// 调用一下makeLiveCancellable 保证makeLiveCancellable 一定会在observer之前生成 保证优先级
     final liveable = makeLiveCancellable(other: cancellable);
+
     StreamController<T> controller = StreamController();
     controller.bindCancellable(liveable);
 
     if (targetState < LifecycleState.created) {
-      launchWhenLifecycleStateDestroyed(
-              runWithDelayed: runWithDelayed,
-              cancellable: cancellable,
-              block: block)
-          .then(controller.add)
-          .catchError(controller.addError);
+      launchWhenLifecycleStateAtLeast(
+        targetState: LifecycleState.created,
+        runWithDelayed: runWithDelayed,
+        cancellable: cancellable,
+        block: block,
+      ).then(controller.add).catchError(controller.addError);
       return controller.stream;
     }
 
@@ -250,9 +264,14 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     controller.onCancel =
         () => removeLifecycleObserver(observer, fullCycle: false);
 
-    cancellable?.onCancel
-        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
-
+    if (this is LifecycleRegistryState) {
+      /// 由于代管理者会直接销毁 需要特殊处理
+      liveable.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    } else {
+      cancellable?.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    }
     return controller.stream;
   }
 
@@ -262,21 +281,30 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       bool runWithDelayed = false,
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
-    assert(targetEvent != LifecycleEvent.destroy,
-        'must use launchWhenLifecycleEventDestroy');
-
     if (currentLifecycleState == LifecycleState.destroyed ||
         cancellable?.isUnavailable == true) {
       return Completer<T>().future;
     }
 
-    final liveable = makeLiveCancellable();
+    assert(targetEvent != LifecycleEvent.destroy,
+        'must use launchWhenLifecycleEventDestroy');
+
+    /// 调用一下makeLiveCancellable 保证makeLiveCancellable 一定会在observer之前生成 保证优先级
+    final liveable = makeLiveCancellable(other: cancellable);
+
+    if (targetEvent == LifecycleEvent.destroy) {
+      return launchWhenLifecycleEventDestroy(
+          runWithDelayed: runWithDelayed,
+          cancellable: cancellable,
+          block: block);
+    }
+
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     late final LifecycleObserver observer;
     Cancellable? checkable;
     observer = LifecycleObserver.eventAny((event) async {
       if (event == targetEvent && liveable.isAvailable && checkable == null) {
-        final able = liveable.makeCancellable(father: cancellable);
+        final able = liveable.makeCancellable();
         checkable = able;
         try {
           if (runWithDelayed) {
@@ -320,8 +348,14 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     result.whenComplete(
         () => removeLifecycleObserver(observer, fullCycle: false));
 
-    cancellable?.onCancel
-        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    if (this is LifecycleRegistryState) {
+      /// 由于代管理者会直接销毁 需要特殊处理
+      liveable.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    } else {
+      cancellable?.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    }
     return result;
   }
 
@@ -332,13 +366,18 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       Cancellable? cancellable,
       required FutureOr<T> Function(Cancellable cancellable) block}) {
     assert(targetState > LifecycleState.initialized,
-        'must use launchWhenLifecycleStateDestroyed');
+        'targetState must be greater than initialized');
     if (currentLifecycleState == LifecycleState.destroyed ||
         cancellable?.isUnavailable == true) {
       return Completer<T>().future;
     }
 
-    final liveable = makeLiveCancellable();
+    if (targetState < LifecycleState.created) {
+      targetState = LifecycleState.created;
+    }
+
+    final liveable = makeLiveCancellable(other: cancellable);
+
     Completer<T> completer = runWithDelayed ? Completer() : Completer.sync();
     late final LifecycleObserver observer;
 
@@ -373,41 +412,16 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
       }
     }
 
-    // if (runWithDelayed == true && currentLifecycleState >= targetState) {
-    //   Cancellable checkable = makeLiveCancellable(other: cancellable);
-    //   if (checkable.isUnavailable) {
-    //     return Completer<T>().future;
-    //   }
-    //   var result = block(checkable);
-    //   if (result is Future<T>) {
-    //     late final LifecycleObserver observer;
-    //     observer = LifecycleObserver.stateChange((state) {
-    //       if (state < targetState && checkable.isAvailable == true) {
-    //         checkable.cancel();
-    //         removeLifecycleObserver(observer, fullCycle: false);
-    //       }
-    //     });
-    //     addLifecycleObserver(observer,
-    //         fullCycle: true, startWith: currentLifecycleState);
-    //     result.whenComplete(
-    //         () => removeLifecycleObserver(observer, fullCycle: false));
-    //     return result;
-    //   } else {
-    //     return Future.sync(() => result);
-    //   }
-    // }
-
     Cancellable? checkable;
 
     if (currentLifecycleState >= targetState &&
         liveable.isAvailable &&
         !runWithDelayed) {
-      final c = liveable.makeCancellable(father: checkable);
-      checkable = c;
+      checkable = liveable;
       observer = LifecycleObserver.stateChange((state) {
         if (state < targetState && liveable.isAvailable == true) {
-          liveable.cancel();
           removeLifecycleObserver(observer, fullCycle: false);
+          liveable.cancel();
         }
       });
       addLifecycleObserver(observer,
@@ -416,7 +430,7 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     } else {
       observer = LifecycleObserver.stateChange((state) async {
         if (state >= targetState && liveable.isAvailable && checkable == null) {
-          checkable = liveable.makeCancellable(father: checkable);
+          checkable = liveable.makeCancellable();
           runBlock(checkable!);
         } else if (state < targetState && checkable?.isAvailable == true) {
           checkable?.cancel();
@@ -430,8 +444,14 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
     result.whenComplete(
         () => removeLifecycleObserver(observer, fullCycle: false));
 
-    cancellable?.onCancel
-        .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    if (this is LifecycleRegistryState) {
+      /// 由于代管理者会直接销毁 需要特殊处理
+      liveable.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    } else {
+      cancellable?.onCancel
+          .then((value) => removeLifecycleObserver(observer, fullCycle: false));
+    }
     return result;
   }
 

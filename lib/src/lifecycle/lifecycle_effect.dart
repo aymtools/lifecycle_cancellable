@@ -90,6 +90,7 @@ const _withLifecycleEffectToken = Object();
 
 extension LifecycleLauncherExt on ILifecycle {
   /// 直接使用生命周期对类对象进行操作
+  /// - **注意** 在[LifecycleRegistryState]子类中使用时 注意[mounted] 状态
   T withLifecycleEffect<T extends Object>({
     T? data,
     T Function()? factory,

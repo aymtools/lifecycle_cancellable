@@ -610,6 +610,9 @@ void main() {
     });
 
     test('.whenLifecycleStateAtLeast() cancel', () async {
+      final c = lifecycle.makeLiveCancellable();
+      expect(registry.observers.length, 1);
+
       var called = false;
       final cancellable = Cancellable();
       lifecycle

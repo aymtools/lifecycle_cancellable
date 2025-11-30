@@ -99,8 +99,9 @@ extension LifecycleObserverRegistryCacnellable on ILifecycle {
   /// 构建一个绑定到[lifecycle]的[Cancellable]
   /// *[weakRef] 是否是弱引用的 保持兼容性为 false 将在3.0版本改为 true
   Cancellable makeLiveCancellable({Cancellable? other, bool weakRef = false}) {
-    assert(currentLifecycleState > LifecycleState.destroyed,
-        'Must be used before destroyed.');
+    // 不在需要进行断言 destroy 时自动返回一个已经cancel的cancellable
+    // assert(currentLifecycleState > LifecycleState.destroyed,
+    //     'Must be used before destroyed.');
     if (currentLifecycleState <= LifecycleState.destroyed ||
         other?.isUnavailable == true) {
       return Cancellable()..cancel();

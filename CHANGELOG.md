@@ -1,3 +1,8 @@
+## 2.5.3
+
+* ILifecycle.makeLiveCancellable removed the assert that checked for states greater than
+  destroyed
+
 ## 2.5.2
 
 * ILifecycle.makeLiveCancellable adds availability check for other.

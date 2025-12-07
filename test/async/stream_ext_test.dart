@@ -176,9 +176,16 @@ void main() {
       streamController.addError('error2');
       await Future.delayed(Duration.zero);
       subscription.cancel();
+
+      final list2 = <Object>[];
+      final subscription2 =
+          stream.listen((event) => list2.add(event), onError: list2.add);
+
+      subscription2.cancel();
       streamController.close();
 
       expect(list, [1, 'error1', 2, 'error2']);
+      expect(list2, []);
     });
 
     test('.repeatLatest() with no events', () async {
@@ -253,7 +260,7 @@ void main() {
     });
 
     test('.repeatLatest() has repeatTimeout', () async {
-      final streamController = StreamController<int>.broadcast();
+      final streamController = StreamController<int>();
       final stream = streamController.stream
           .repeatLatest(repeatTimeout: const Duration(milliseconds: 100));
       final list = <int>[];
@@ -371,6 +378,140 @@ void main() {
 
       expect(list, [1, 'error1', 2, 'error2']);
       expect(list2, ['error1', 2, 'error2']);
+    });
+
+    test('.repeatLatest() has repeatError=true repeatTimeout', () async {
+      final streamController = StreamController<int>();
+      final stream = streamController.stream.repeatLatest(
+          repeatTimeout: const Duration(milliseconds: 100), repeatError: true);
+      final list = <Object>[];
+      final subscription = stream.listen(list.add, onError: list.add);
+      streamController.add(1);
+      await Future.delayed(const Duration(milliseconds: 50));
+      streamController.addError('error1');
+      await Future.delayed(const Duration(milliseconds: 150));
+      final list2 = <int>[];
+      final subscription2 = stream.listen((event) => list2.add(event));
+      await Future.delayed(Duration.zero);
+      streamController.add(3);
+      await Future.delayed(const Duration(milliseconds: 50));
+      await subscription.cancel();
+      await subscription2.cancel();
+      streamController.close();
+      expect(list, [1, 'error1', 3]);
+      expect(list2, [3], reason: 'timeOut error=null');
+    });
+
+    test('.repeatLatest() nullable', () async {
+      final streamController = StreamController<int?>();
+      final stream = streamController.stream.repeatLatest();
+      final list = <int?>[];
+      final subscription = stream.listen(list.add);
+      streamController.add(1);
+      await Future.delayed(Duration.zero);
+      streamController.add(null);
+      await Future.delayed(Duration.zero);
+      final list2 = <int?>[];
+      final subscription2 = stream.listen((event) => list2.add(event));
+      await Future.delayed(Duration.zero);
+      streamController.add(3);
+      await Future.delayed(Duration.zero);
+      await subscription.cancel();
+      await subscription2.cancel();
+      streamController.close();
+      expect(list, [1, null, 3]);
+      expect(list2, [null, 3]);
+    });
+
+    test('.repeatLatest() nullable has repeatTimeout', () async {
+      final streamController = StreamController<int?>();
+      final stream = streamController.stream
+          .repeatLatest(repeatTimeout: Duration(milliseconds: 100));
+      final list = <int?>[];
+      final subscription = stream.listen(list.add);
+      streamController.add(1);
+      await Future.delayed(const Duration(milliseconds: 50));
+      streamController.add(null);
+      await Future.delayed(const Duration(milliseconds: 150));
+      final list2 = <int?>[];
+      final subscription2 = stream.listen((event) => list2.add(event));
+      await Future.delayed(Duration.zero);
+      streamController.add(3);
+      await Future.delayed(Duration.zero);
+      await subscription.cancel();
+      await subscription2.cancel();
+      streamController.close();
+      expect(list, [1, null, 3]);
+      expect(list2, [3]);
+    });
+
+    test('.repeatLatest() nullable has repeatTimeout onTimeout', () async {
+      final streamController = StreamController<int?>();
+      final stream = streamController.stream.repeatLatest(
+          repeatTimeout: Duration(milliseconds: 100), onTimeout: 0);
+      final list = <int?>[];
+      final subscription = stream.listen(list.add);
+      streamController.add(1);
+      await Future.delayed(const Duration(milliseconds: 50));
+      streamController.add(null);
+      await Future.delayed(const Duration(milliseconds: 150));
+      final list2 = <int?>[];
+      final subscription2 = stream.listen((event) => list2.add(event));
+      await Future.delayed(Duration.zero);
+      streamController.add(3);
+      await Future.delayed(Duration.zero);
+      await subscription.cancel();
+      await subscription2.cancel();
+      streamController.close();
+      expect(list, [1, null, 3]);
+      expect(list2, [0, 3]);
+    });
+
+    test('.repeatLatest() nullable has repeatTimeout onRepeatTimeout',
+        () async {
+      final streamController = StreamController<int?>();
+      final stream = streamController.stream.repeatLatest(
+          repeatTimeout: Duration(milliseconds: 100), onRepeatTimeout: () => 0);
+      final list = <int?>[];
+      final subscription = stream.listen(list.add);
+      streamController.add(1);
+      await Future.delayed(const Duration(milliseconds: 50));
+      streamController.add(null);
+      await Future.delayed(const Duration(milliseconds: 150));
+      final list2 = <int?>[];
+      final subscription2 = stream.listen((event) => list2.add(event));
+      await Future.delayed(Duration.zero);
+      streamController.add(3);
+      await Future.delayed(Duration.zero);
+      await subscription.cancel();
+      await subscription2.cancel();
+      streamController.close();
+      expect(list, [1, null, 3]);
+      expect(list2, [0, 3]);
+    });
+
+    test('.repeatLatest() nullable has repeatTimeout onRepeatTimeout',
+        () async {
+      final streamController = StreamController<int?>();
+      final stream = streamController.stream.repeatLatest(
+          repeatTimeout: Duration(milliseconds: 100),
+          onRepeatTimeout: () => null);
+      final list = <int?>[];
+      final subscription = stream.listen(list.add);
+      streamController.add(1);
+      await Future.delayed(const Duration(milliseconds: 50));
+      streamController.add(2);
+      await Future.delayed(const Duration(milliseconds: 150));
+      final list2 = <int?>[];
+      final subscription2 = stream.listen((event) => list2.add(event));
+      await Future.delayed(Duration.zero);
+      streamController.add(3);
+      await Future.delayed(Duration.zero);
+      await subscription.cancel();
+      await subscription2.cancel();
+      streamController.close();
+      expect(list, [1, 2, 3]);
+      expect(list2, [null, 3]);
     });
   });
 }

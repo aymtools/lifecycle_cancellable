@@ -2,10 +2,12 @@
 
 * When runWithDelayed = true, the block in ILifecycle.launchWhenLifecycleStateAtLeast is guaranteed
   to run.
+* Stream.repeatLatest support nullable.
+* Stream Added the StreamIgnoreNoElement extension
 
 ### Breaking Changes
 
-* context.remember has been removed.
+* context.remember has been removed, use package [remember](https://pub.dev/packages/remember).
 * Adjust the project structure and move it into src.
 
 ## 2.5.3

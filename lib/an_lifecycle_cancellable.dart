@@ -2,6 +2,7 @@ library lifecycle_cancellable;
 
 export 'src/async/collect_as.dart';
 export 'src/async/stream_ext.dart';
+export 'src/async/stream_ignore_ext.dart';
 export 'src/dialog/context_ext.dart';
 export 'src/dialog/dialog_ext.dart';
 export 'src/dialog/navigator_ext.dart';

@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:an_lifecycle_cancellable/src/key/key.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:weak_collections/weak_collections.dart';
@@ -10,9 +12,22 @@ Object _genKey<T extends Object>({Object? key}) => key == null
         ? key
         : TypedKey<T>(key);
 
+typedef LifecycleExtDataOnDestroy<T> = void Function(T data);
+
+class _ExtDataEntry<T> {
+  T data;
+  final LifecycleExtDataOnDestroy<T>? onDestroy;
+
+  _ExtDataEntry(this.data, this.onDestroy);
+
+  void _destroy() {
+    onDestroy?.call(data);
+  }
+}
+
 /// 寄存于lifecycle的数据 基类
 abstract class LifecycleExtData {
-  final Map<Object, Object?> _data = {};
+  final Map<Object, _ExtDataEntry> _data = HashMap();
   bool _isDestroyed = false;
 
   /// 判断当前是否是已经销毁状态
@@ -21,34 +36,54 @@ abstract class LifecycleExtData {
   LifecycleExtData._();
 
   /// 根据Type + key获取，如果不存在则创建信息
-  T putIfAbsent<T extends Object>(
-      {Object? key, required T Function() ifAbsent}) {
+  T putIfAbsent<T extends Object>({Object? key,
+    required T Function() ifAbsent,
+    LifecycleExtDataOnDestroy<T>? onDestroy}) {
     if (_isDestroyed) {
       throw Exception('extData has been destroyed.');
     }
-    return _data.putIfAbsent(_genKey<T>(key: key), ifAbsent) as T;
+    return _data
+        .putIfAbsent(
+            _genKey<T>(key: key), () => _ExtDataEntry<T>(ifAbsent(), onDestroy))
+        .data;
   }
 
   /// 替换为新数据  返回结构为旧数据如果不存在旧数据则返回null
-  T? replace<T extends Object>({Object? key, required T data}) {
+  T? replace<T extends Object>(
+      {Object? key, required T data, bool callOnDestroy = true}) {
     if (_isDestroyed) return null;
     final k = _genKey<T>(key: key);
-    final last = _data[k] as T?;
-    _data[k] = data;
+    final entry = _data[k];
+    final last = entry?.data;
+    entry?.data = data;
+    if (callOnDestroy && last != null) {
+      entry?.onDestroy?.call(last);
+    }
     return last;
   }
 
   /// 根据key获取
-  T? get<T extends Object>({Object? key}) => _data[_genKey<T>(key: key)] as T?;
+  T? get<T extends Object>({Object? key}) =>
+      _data[_genKey<T>(key: key)]?.data as T?;
 
   /// 手动移除指定的key
-  T? remove<T extends Object>({Object? key}) =>
-      _data.remove(_genKey<T>(key: key)) as T?;
+  T? remove<T extends Object>({Object? key, bool callOnDestroy = true}) {
+    final entry = _data.remove(_genKey<T>(key: key));
+    final d = entry?.data;
+    if (callOnDestroy) {
+      entry?._destroy();
+    }
+    return d as T?;
+  }
 
   // 执行销毁
   void _destroy() {
     _isDestroyed = true;
+    final values = [..._data.values];
     _data.clear();
+    for (final entry in values) {
+      entry._destroy();
+    }
   }
 }
 
@@ -61,14 +96,17 @@ class LiveExtData extends LifecycleExtData {
         super._();
 
   /// 根据Type + key获取，如果不存在则创建信息
-  T getOrPut<T extends Object>(
-      {Object? key, required T Function(Lifecycle lifecycle) ifAbsent}) {
+  T getOrPut<T extends Object>({Object? key,
+    required T Function(Lifecycle lifecycle) ifAbsent,
+    LifecycleExtDataOnDestroy<T>? onDestroy}) {
     final lifecycle = _lifecycle?.target;
     if (_isDestroyed || lifecycle == null) {
       throw Exception('extData has been destroyed.');
     }
-    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(lifecycle))
-        as T;
+    return _data
+        .putIfAbsent(_genKey<T>(key: key),
+            () => _ExtDataEntry<T>(ifAbsent(lifecycle), onDestroy))
+        .data;
   }
 
   @override
@@ -89,13 +127,16 @@ class LifecycleRegistryExtData extends LifecycleExtData {
   /// 根据Type + key获取，如果不存在则创建信息
   T getOrPut<T extends Object>(
       {Object? key,
-      required T Function(ILifecycleRegistry lifecycle) ifAbsent}) {
+      required T Function(ILifecycleRegistry lifecycle) ifAbsent,
+      LifecycleExtDataOnDestroy<T>? onDestroy}) {
     final lifecycle = _lifecycle?.target;
     if (_isDestroyed || lifecycle == null) {
       throw Exception('extData has been destroyed.');
     }
-    return _data.putIfAbsent(_genKey<T>(key: key), () => ifAbsent(lifecycle))
-        as T;
+    return _data
+        .putIfAbsent(_genKey<T>(key: key),
+            () => _ExtDataEntry<T>(ifAbsent(lifecycle), onDestroy))
+        .data;
   }
 
   @override
@@ -116,6 +157,9 @@ extension LifecycleTypedDataExt on Lifecycle {
   LiveExtData get extData {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
+    if (currentLifecycleState == LifecycleState.destroyed) {
+      return LiveExtData._(this).._destroy();
+    }
     return _liveExtDataCache.putIfAbsent(this, () {
       addObserver(LifecycleObserver.onEventDestroy(
           (owner) => _liveExtDataCache.remove(owner.lifecycle)?._destroy()));
@@ -151,6 +195,9 @@ extension LifecycleRegistryTypedDataExt on ILifecycleRegistry {
   LifecycleRegistryExtData get extDataForRegistry {
     assert(currentLifecycleState > LifecycleState.destroyed,
         'The currentLifecycleState state must be greater than LifecycleState.destroyed.');
+    if (currentLifecycleState == LifecycleState.destroyed) {
+      return LifecycleRegistryExtData._(this).._destroy();
+    }
     return _liveRegistryExtDataCache.putIfAbsent(this, () {
       addLifecycleObserver(LifecycleObserver.onEventDestroy(
           (owner) => _liveRegistryExtDataCache.remove(this)?._destroy()));

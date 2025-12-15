@@ -97,5 +97,27 @@ void main() {
       final curr = data2.get<int>();
       expect(curr, isNull);
     });
+
+    test('liveData call onDestroy', () {
+      final data = lifecycle.extData;
+      bool called = false;
+      final value =
+          data.putIfAbsent(ifAbsent: () => 1, onDestroy: (v) => called = true);
+      expect(value, 1);
+
+      registry.handleLifecycleEvent(LifecycleEvent.destroy);
+
+      final curr = data.get<int>();
+      expect(curr, isNull);
+      expect(called, isTrue);
+
+      Object? error;
+      try {
+        owner.extData;
+      } catch (e) {
+        error = e;
+      }
+      expect(error, isNotNull);
+    });
   });
 }

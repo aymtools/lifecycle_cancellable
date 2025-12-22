@@ -1,6 +1,6 @@
 name: an_lifecycle_cancellable
 description: "After merging Lifecycle and Cancellable, the toolkit provided in flutter"
-version: 2.6.0-pre.1
+version: 2.6.0-pre.2
 homepage: https://github.com/aymtools/lifecycle_cancellable/
 issue_tracker: https://github.com/aymtools/lifecycle_cancellable/issues
 
@@ -27,4 +27,3 @@ dev_dependencies:
     sdk: flutter
   test: ^1.5.1
   flutter_lints: any
-

@@ -36,9 +36,10 @@ abstract class LifecycleExtData {
   LifecycleExtData._();
 
   /// 根据Type + key获取，如果不存在则创建信息
-  T putIfAbsent<T extends Object>({Object? key,
-    required T Function() ifAbsent,
-    LifecycleExtDataOnDestroy<T>? onDestroy}) {
+  T putIfAbsent<T extends Object>(
+      {Object? key,
+      required T Function() ifAbsent,
+      LifecycleExtDataOnDestroy<T>? onDestroy}) {
     if (_isDestroyed) {
       throw Exception('extData has been destroyed.');
     }
@@ -96,9 +97,10 @@ class LiveExtData extends LifecycleExtData {
         super._();
 
   /// 根据Type + key获取，如果不存在则创建信息
-  T getOrPut<T extends Object>({Object? key,
-    required T Function(Lifecycle lifecycle) ifAbsent,
-    LifecycleExtDataOnDestroy<T>? onDestroy}) {
+  T getOrPut<T extends Object>(
+      {Object? key,
+      required T Function(Lifecycle lifecycle) ifAbsent,
+      LifecycleExtDataOnDestroy<T>? onDestroy}) {
     final lifecycle = _lifecycle?.target;
     if (_isDestroyed || lifecycle == null) {
       throw Exception('extData has been destroyed.');

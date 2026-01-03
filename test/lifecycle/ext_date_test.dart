@@ -36,6 +36,7 @@ void main() {
 
       registry.handleLifecycleEvent(LifecycleEvent.destroy);
 
+      expect(data.isDestroyed, isTrue);
       final curr = data.get<int>();
       expect(curr, isNull);
 

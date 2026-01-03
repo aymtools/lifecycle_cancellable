@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:an_lifecycle_cancellable/src/key/key.dart';
 import 'package:anlifecycle/anlifecycle.dart';
+import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';
 
 export 'package:an_lifecycle_cancellable/src/key/key.dart' show TypedKey;
@@ -79,6 +80,7 @@ abstract class LifecycleExtData {
 
   // 执行销毁
   void _destroy() {
+    if (_isDestroyed) return;
     _isDestroyed = true;
     final values = [..._data.values];
     _data.clear();
@@ -86,6 +88,9 @@ abstract class LifecycleExtData {
       entry._destroy();
     }
   }
+
+  @visibleForTesting
+  bool get isEmpty => _data.isEmpty;
 }
 
 /// 寄存于lifecycle的数据

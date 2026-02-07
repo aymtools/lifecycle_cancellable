@@ -1,4 +1,4 @@
-library lifecycle_cancellable;
+library;
 
 export 'src/async/collect_as.dart';
 export 'src/async/stream_ext.dart';

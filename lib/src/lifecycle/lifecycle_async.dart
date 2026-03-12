@@ -7,6 +7,7 @@ import 'package:cancellable/cancellable.dart';
 extension StreamLifecycleExt<T> on Stream<T> {
   /// 将Stream关联到lifecycle
   /// * [repeatLastOnRestart] 是指当重新进入到状态时，是否发射之前的数据
+  /// * [closeWhenCancel] 当lifecycle destroy 时，将stream done **未来这里要与cancellable同步为true**
   Stream<T> bindLifecycle(ILifecycle lifecycle,
       {LifecycleState state = LifecycleState.created,
       @Deprecated('use repeatLastOnStateAtLeast v2.2.2')

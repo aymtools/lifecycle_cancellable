@@ -19,15 +19,17 @@ extension StreamIgnoreNoElementExt<T> on Stream<T> {
   /// 获取流中的最后一个元素 如果是empty则不执行后续的 then
   Future<T> get lastIgnoreNoElement {
     Completer<T> completer = Completer();
+    bool hasValue = false;
     T? lastValue;
     listen(
       (event) {
         lastValue = event;
+        hasValue = true;
       },
       onError: completer.completeError,
       onDone: () {
-        if (lastValue != null) {
-          completer.complete(lastValue!);
+        if (hasValue) {
+          completer.complete(lastValue);
         }
       },
       cancelOnError: true,
@@ -82,16 +84,18 @@ extension StreamIgnoreNoElementExt<T> on Stream<T> {
   /// 根据条件获取流中的最后一个元素 如果是empty则不执行后续的 then
   Future<T> lastWhereIgnoreNoElement(bool Function(T element) test) {
     Completer<T> completer = Completer();
+    bool hasValue = false;
     T? lastValue;
     listen(
       (event) {
         if (test(event)) {
           lastValue = event;
+          hasValue = true;
         }
       },
       onError: completer.completeError,
       onDone: () {
-        if (lastValue != null) {
+        if (hasValue) {
           completer.complete(lastValue!);
         }
       },

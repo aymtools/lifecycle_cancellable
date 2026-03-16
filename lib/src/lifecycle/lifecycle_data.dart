@@ -36,7 +36,7 @@ abstract class LifecycleExtData {
 
   LifecycleExtData._();
 
-  /// 根据Type + key获取，如果不存在则创建信息
+  /// 根据Type + key获取，如果不存在则创建信息 如果已经存在则只返回之前的值
   T putIfAbsent<T extends Object>(
       {Object? key,
       required T Function() ifAbsent,
@@ -50,7 +50,28 @@ abstract class LifecycleExtData {
         .data;
   }
 
+  /// 放入新值 如果之前存在返回之前的值并且将新的data放入
+  T? put<T extends Object>(
+      {Object? key,
+      required T data,
+      LifecycleExtDataOnDestroy<T>? onDestroy,
+      bool callOnDestroy = true}) {
+    if (_isDestroyed) return null;
+    final k = _genKey<T>(key: key);
+    final entry = _data[k];
+    _data[k] = _ExtDataEntry<T>(data, onDestroy);
+    T? last;
+    if (entry != null) {
+      last = entry.data;
+      if (callOnDestroy) {
+        entry._destroy();
+      }
+    }
+    return last;
+  }
+
   /// 替换为新数据  返回结构为旧数据如果不存在旧数据则返回null
+  /// 如果旧数据不存在 则不执行任何操作
   T? replace<T extends Object>(
       {Object? key, required T data, bool callOnDestroy = true}) {
     if (_isDestroyed) return null;

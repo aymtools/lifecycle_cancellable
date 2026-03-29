@@ -54,12 +54,12 @@ extension StreamLifecycleExt<T> on Stream<T> {
     }
 
     if (repeatLastOnStateAtLeast) {
-      T? cache;
+      _RepeatEntry<T>? cacheValue;
       EventSink<T>? eventSink;
       final lastCleanCache = cleanCache;
       cleanCacheDate() {
         lastCleanCache.call();
-        cache = null;
+        cacheValue = null;
         eventSink = null;
       }
 
@@ -73,7 +73,7 @@ extension StreamLifecycleExt<T> on Stream<T> {
             if (lifecycle.currentLifecycleState >= state) {
               sink.add(data);
             } else {
-              cache = data;
+              cacheValue = _RepeatEntry<T>(data);
               eventSink = sink;
             }
           }
@@ -89,8 +89,8 @@ extension StreamLifecycleExt<T> on Stream<T> {
                 isClose = true;
                 cacheErrorSink?.close();
               }
-            } else if (!isClose && cache != null && eventSink != null) {
-              eventSink?.add(cache as T);
+            } else if (!isClose && cacheValue != null && eventSink != null) {
+              eventSink?.add(cacheValue!.value);
             }
             cleanCache.call();
           });
@@ -131,4 +131,10 @@ extension FutureLifecycleExt<T> on Future<T> {
     return bindCancellable(registry.makeLiveCancellable(),
         throwWhenCancel: throwWhenCancel);
   }
+}
+
+class _RepeatEntry<T> {
+  final T value;
+
+  _RepeatEntry(this.value);
 }

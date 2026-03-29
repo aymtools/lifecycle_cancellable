@@ -19,11 +19,10 @@ class _LifecycleTicker extends Ticker {
 }
 
 class _LifecycleTickerProvider implements TickerProvider {
-  final Lifecycle lifecycle;
   Set<Ticker>? _tickers;
   final ValueNotifier<bool> _tickerModeNotifier = ValueNotifier(true);
 
-  _LifecycleTickerProvider(this.lifecycle) {
+  _LifecycleTickerProvider(Lifecycle lifecycle) {
     _tickerModeNotifier.addListener(_updateTickers);
     lifecycle.addLifecycleObserver(LifecycleObserver.stateChange((state) =>
         _tickerModeNotifier.value = state >= LifecycleState.started));

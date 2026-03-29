@@ -4,6 +4,7 @@
   to run.
 * Stream.repeatLatest support nullable.
 * Stream Added the StreamIgnoreNoElement extension
+* Stream.bindLifecycle: Support nullable in repeat.
 
 ### Breaking Changes
 

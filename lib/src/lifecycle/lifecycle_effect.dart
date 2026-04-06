@@ -138,7 +138,7 @@ extension LifecycleLauncherExt on ILifecycle {
             key: _withLifecycleEffectToken, ifAbsent: () => WeakHashMap());
 
     _LauncherLifecycleObserver<T> observer =
-        lifecycleEffectObservers.putIfAbsent(value as Object, () {
+        lifecycleEffectObservers.putIfAbsent(value, () {
       final o = _LauncherLifecycleObserver<T>(value);
       o.launchOnFirstCreate = launchOnFirstCreate;
       o.launchOnFirstStart = launchOnFirstStart;

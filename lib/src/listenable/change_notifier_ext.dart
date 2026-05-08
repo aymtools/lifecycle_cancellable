@@ -196,6 +196,10 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
   /// 当value首次满足条件时触发， cancellable 取消时取消监听
   Future<T> firstWhereValue(bool Function(T value) test,
       {Cancellable? cancellable}) {
+    if (cancellable?.isUnavailable == true) {
+      // 已经被取消了，永远不执行
+      return Completer<T>().future;
+    }
     final v = value;
     if (test(v)) {
       return Future.sync(() => v);
@@ -203,7 +207,7 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
 
     Completer<T> completer = Completer.sync();
     if (cancellable == null || cancellable.isAvailable) {
-      Cancellable c = cancellable ?? Cancellable();
+      Cancellable c = cancellable?.makeCancellable() ?? Cancellable();
 
       void onValueChange() {
         final v = value;

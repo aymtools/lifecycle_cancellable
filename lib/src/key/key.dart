@@ -11,9 +11,9 @@ const Object _sentinelValue = Object();
 /// - `object1` to `object20`: These fields can hold any object type, such
 ///   as `String`, `int`, `DateTime`, or custom objects.
 /// - The `==` operator and `hashCode` method ensure correct equality comparison
-///   and hash generation based on all non-null fields.
-/// - The `toString()` method concatenates all non-null fields into a
-///   human-readable string, joined by underscores (`_`), for easy debugging.
+///   and hash generation based on all provided fields.
+/// - The `toString()` method concatenates all provided fields into a
+///   human-readable string, joined by commas (`, `), for easy debugging.
 ///
 /// Example usage:
 ///
@@ -383,9 +383,38 @@ class FlexibleKey {
         object19 == other.object19 &&
         object20 == other.object20;
   }
+
+  @override
+  String toString() {
+    final parts = [
+      object1,
+      object2,
+      object3,
+      object4,
+      object5,
+      object6,
+      object7,
+      object8,
+      object9,
+      object10,
+      object11,
+      object12,
+      object13,
+      object14,
+      object15,
+      object16,
+      object17,
+      object18,
+      object19,
+      object20,
+    ].where((obj) => obj != _sentinelValue);
+
+    return 'FlexibleKey(${parts.join(', ')})';
+  }
 }
 
 /// 以泛型类型和 key 参数作为索引
+/// A key class that uses both a generic type `T` and an optional `key` as an index.
 class TypedKey<T> {
   final Object? key;
 
@@ -399,7 +428,14 @@ class TypedKey<T> {
     return other is TypedKey<T> && key == other.key;
   }
 
+  @override
+  String toString() {
+    return 'TypedKey<$T>(key:$key)';
+  }
+
   /// 产生一个泛型类型的key 如果不指定参数key 则直接以参数的 Type作为key
+  /// Generates a key for a generic type. If no `key` is provided, the type `T`
+  //    itself is used as the key.
   static Object genKey<T extends Object>({Object? key}) => key == null
       ? T
       : key is TypedKey<T>

@@ -22,6 +22,7 @@ class CancellableValueNotifier<T> extends ValueNotifier<T> {
     if (_cancellable.isAvailable) {
       if (_value == newValue) {
         if (notifyWhenEquals) {
+          _value = newValue;
           super.notifyListeners();
         }
         return;

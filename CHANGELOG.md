@@ -1,3 +1,7 @@
+## 2.6.1
+
+* Fix cancellable consumption in ValueNotifier.firstWhereValue
+
 ## 2.6.0
 
 * When runWithDelayed = true, the block in ILifecycle.launchWhenLifecycleStateAtLeast is guaranteed

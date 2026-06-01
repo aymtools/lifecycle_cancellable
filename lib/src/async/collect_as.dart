@@ -9,6 +9,7 @@ extension StreamToolsCollectAsStateExt<T> on Stream<T> {
   ValueNotifier<T> collectAsState(
       {T? initial,
       T Function(Object error, StackTrace stackTrace)? onError,
+      bool? cancelOnError,
       Cancellable? cancellable}) {
     ValueNotifier<T>? notifier;
 
@@ -24,30 +25,38 @@ extension StreamToolsCollectAsStateExt<T> on Stream<T> {
 
     if (initial != null) {
       notifier = createNotifier(initial);
-      subscription = listen((event) {
-        notifier!.value = event;
-      }, onError: (error, stackTrace) {
-        if (onError != null) {
-          notifier!.value = onError(error, stackTrace);
-        }
-      });
-    } else {
-      subscription = listen((event) {
-        if (notifier == null) {
-          notifier = createNotifier(event);
-        } else {
+      subscription = listen(
+        (event) {
           notifier!.value = event;
-        }
-      }, onError: (error, stackTrace) {
-        if (onError != null) {
-          final value = onError(error, stackTrace);
-          if (notifier == null) {
-            notifier = createNotifier(value);
-          } else {
-            notifier!.value = value;
+        },
+        onError: (error, stackTrace) {
+          if (onError != null) {
+            notifier!.value = onError(error, stackTrace);
           }
-        }
-      });
+        },
+        cancelOnError: cancelOnError,
+      );
+    } else {
+      subscription = listen(
+        (event) {
+          if (notifier == null) {
+            notifier = createNotifier(event);
+          } else {
+            notifier!.value = event;
+          }
+        },
+        onError: (error, stackTrace) {
+          if (onError != null) {
+            final value = onError(error, stackTrace);
+            if (notifier == null) {
+              notifier = createNotifier(value);
+            } else {
+              notifier!.value = value;
+            }
+          }
+        },
+        cancelOnError: cancelOnError,
+      );
     }
 
     assert(notifier != null,

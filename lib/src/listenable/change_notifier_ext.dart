@@ -194,10 +194,16 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
       firstWhereValue(test, cancellable: cancellable);
 
   /// 当value首次满足条件时触发， cancellable 取消时取消监听
+  /// * [test] 条件
+  /// * [cancellable] 取消监听
+  /// * [emitCancelledException] 是否将CancelledException加入到Future
   Future<T> firstWhereValue(bool Function(T value) test,
-      {Cancellable? cancellable}) {
+      {Cancellable? cancellable, bool? emitCancelledException}) {
     if (cancellable?.isUnavailable == true) {
       // 已经被取消了，永远不执行
+      if (emitCancelledException == true) {
+        return Future<T>.error(cancellable!.reasonAsException!);
+      }
       return Completer<T>().future;
     }
     final v = value;
@@ -207,18 +213,23 @@ extension ValueNotifierCancellable<T> on ValueNotifier<T> {
 
     Completer<T> completer = Completer.sync();
     if (cancellable == null || cancellable.isAvailable) {
-      Cancellable c = cancellable?.makeCancellable() ?? Cancellable();
+      final c = cancellable?.makeCancellable() ?? Cancellable();
 
       void onValueChange() {
         final v = value;
-        if (test(v)) {
+        if (!completer.isCompleted && c.isAvailable && test(v)) {
           completer.complete(v);
           c.cancel();
         }
       }
 
       addListener(onValueChange);
-      c.onCancel.then((_) => removeListener(onValueChange));
+      c.onCancel.then((ex) {
+        removeListener(onValueChange);
+        if (emitCancelledException == true && !completer.isCompleted) {
+          completer.completeError(ex);
+        }
+      });
     }
     return completer.future;
   }

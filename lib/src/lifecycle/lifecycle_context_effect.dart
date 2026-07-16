@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:an_lifecycle_cancellable/src/tools/delayed_run.dart';
 import 'package:an_lifecycle_cancellable/src/tools/weak_map_clear.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
@@ -50,9 +51,9 @@ class _LLauncherObserver with LifecycleStateChangeObserver {
     }
     if (_lastState < state) {
       if (state == LifecycleState.resumed) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        runAfterNextFrameCallbackOrNextEventLoop(() {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
-          if (owner.lifecycle.currentState >= LifecycleState.resumed &&
+          if (owner.lifecycle.currentLifecycleState >= LifecycleState.resumed &&
               _context.target?.mounted == true) {
             _safeCallLauncher(
                 repeatOnResumed, owner.lifecycle, 'repeatOnResumed');
@@ -67,10 +68,9 @@ class _LLauncherObserver with LifecycleStateChangeObserver {
 
   void _dRunOnResume(LifecycleOwner owner) {
     _firstResume = false;
-    final l = owner.lifecycle;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    runAfterNextFrameCallbackOrNextEventLoop(() {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
-      if (l.currentState > LifecycleState.destroyed &&
+      if (owner.currentLifecycleState > LifecycleState.destroyed &&
           _context.target?.mounted == true) {
         _safeCallLauncher(
             launchOnFirstResume, owner.lifecycle, 'launchOnFirstResume');
@@ -178,9 +178,9 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
     }
     if (_lastState < state) {
       if (state == LifecycleState.resumed) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        runAfterNextFrameCallbackOrNextEventLoop(() {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
-          if (owner.lifecycle.currentState >= LifecycleState.resumed &&
+          if (owner.lifecycle.currentLifecycleState >= LifecycleState.resumed &&
               _context.target?.mounted == true) {
             _safeCallLauncher(
                 repeatOnResumed, owner.lifecycle, 'repeatOnResumed');
@@ -195,10 +195,9 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
 
   void _dRunOnResume(LifecycleOwner owner) {
     _firstResume = false;
-    final l = owner.lifecycle;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    runAfterNextFrameCallbackOrNextEventLoop(() {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
-      if (l.currentState > LifecycleState.destroyed &&
+      if (owner.currentLifecycleState > LifecycleState.destroyed &&
           _context.target?.mounted == true) {
         _safeCallLauncher(
             launchOnFirstResume, owner.lifecycle, 'launchOnFirstResume');

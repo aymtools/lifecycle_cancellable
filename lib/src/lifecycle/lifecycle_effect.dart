@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:an_lifecycle_cancellable/src/lifecycle/lifecycle_data.dart';
+import 'package:an_lifecycle_cancellable/src/tools/delayed_run.dart';
 import 'package:anlifecycle/anlifecycle.dart';
 import 'package:flutter/widgets.dart';
 import 'package:weak_collections/weak_collections.dart';
@@ -44,9 +45,9 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
     }
     if (_lastState < state) {
       if (state == LifecycleState.resumed) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
+        runAfterNextFrameCallbackOrNextEventLoop(() {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
-          if (owner.lifecycle.currentState >= LifecycleState.resumed) {
+          if (owner.currentLifecycleState >= LifecycleState.resumed) {
             _safeCallLauncher(
                 repeatOnResumed, owner.lifecycle, 'repeatOnResumed');
           }
@@ -60,10 +61,9 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
 
   void _dRunOnResume(LifecycleOwner owner) {
     _firstResume = false;
-    final l = owner.lifecycle;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    runAfterNextFrameCallbackOrNextEventLoop(() {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
-      if (l.currentState > LifecycleState.destroyed) {
+      if (owner.currentLifecycleState > LifecycleState.destroyed) {
         _safeCallLauncher(
             launchOnFirstResume, owner.lifecycle, 'launchOnFirstResume');
       }

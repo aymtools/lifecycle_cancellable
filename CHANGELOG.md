@@ -1,6 +1,9 @@
 ## 2.6.1
 
+* Stream.repeatLatest add lazyListen
 * Fix cancellable consumption in ValueNotifier.firstWhereValue
+* Fix Replaced addPostFrameCallback with scheduleTask for delayed execution to prevent frame-miss
+  deadlocks and rendering conflicts.
 
 ## 2.6.0
 

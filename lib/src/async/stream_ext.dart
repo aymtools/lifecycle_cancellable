@@ -61,13 +61,21 @@ extension StreamToolsExt<T> on Stream<T> {
   /// * [onTimeout] 超时时返回的值,仅支持非[null]的值
   /// * [onRepeatTimeout] 超时时返回的值,允许[null]值
   /// * [repeatError] 是否重复错误
-  /// * [broadcast] 是否广播
+  /// * [broadcast] 是否是广播Stream
+  /// * [lazyListen] 是否延迟订阅；
+  /// 1. [lazyListen]值为[true]时，不会立即订阅，默认值；
+  /// a. 针对[source]为[broadcast]时，直到有第一个订阅时才会开始记录最后的值，被订阅之前的值都会被丢弃，之后有变化会更新最后一个值；
+  /// b. 针对[source]不是[broadcast]时，会在第一个订阅时立即订阅发布流内所有的值，然后记录最后一个值，之后有变化会更新最后一个值；
+  /// 2. [lazyListen]值为false时，会进行对源立即订阅；
+  /// a. 针对[source]为[broadcast]时，会立即订阅发布流，在此之前的值会被丢弃，会记录最后的一个值，之后有变化会更新最后一个值；
+  /// b. 针对[source]不是[broadcast]时，会立即订阅发布流内，在此之前的值只会保留最后一个值，之后有变化会更新最后一个值；
   Stream<T> repeatLatest(
       {Duration? repeatTimeout,
       T? onTimeout,
       T Function()? onRepeatTimeout,
       bool repeatError = false,
-      bool? broadcast}) {
+      bool? broadcast,
+      bool lazyListen = true}) {
     var done = false;
     _RepeatEntry<T>? latest;
     Object? cacheError;
@@ -121,24 +129,8 @@ extension StreamToolsExt<T> on Stream<T> {
     final isBroadcast_ = broadcast ?? isBroadcast;
     StreamSubscription<T>? sub;
 
-    return Stream.multi((controller) {
-      var latestValue = latest;
-      if (latestValue != null) {
-        if (!controller.isClosed) {
-          controller.add(latestValue.value);
-        }
-      } else if (cacheError != null) {
-        if (!controller.isClosed) {
-          controller.addError(cacheError!, cacheStackTrace);
-        }
-      }
-      if (done) {
-        if (!controller.isClosed) {
-          controller.close();
-        }
-        return;
-      }
-      currentListeners.add(controller);
+    void startSubscribe() {
+      if (done) return;
       sub ??= listen((event) {
         setLatest(event);
         if (currentListeners.isNotEmpty) {
@@ -170,9 +162,37 @@ extension StreamToolsExt<T> on Stream<T> {
         }
         currentListeners.clear();
       });
+    }
+
+    Stream<T> result = Stream.multi((controller) {
+      var latestValue = latest;
+      if (latestValue != null) {
+        if (!controller.isClosed) {
+          controller.add(latestValue.value);
+        }
+      } else if (cacheError != null) {
+        if (!controller.isClosed) {
+          controller.addError(cacheError!, cacheStackTrace);
+        }
+      }
+      if (done) {
+        if (!controller.isClosed) {
+          controller.close();
+        }
+        return;
+      }
+      currentListeners.add(controller);
+
+      startSubscribe();
 
       controller.onCancel = () => currentListeners.remove(controller);
     }, isBroadcast: isBroadcast_);
+
+    if (!lazyListen) {
+      startSubscribe();
+    }
+
+    return result;
   }
 }
 

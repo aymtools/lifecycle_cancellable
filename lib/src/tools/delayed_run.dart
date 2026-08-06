@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-void runAfterNextFrameCallbackOrNextEventLoop(void Function() callback) {
+void runInNextFrameCallback(void Function() callback) {
   final bindings = WidgetsBinding.instance;
 
   bindings.addPostFrameCallback((_) => callback());

@@ -45,7 +45,7 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
     }
     if (_lastState < state) {
       if (state == LifecycleState.resumed) {
-        runAfterNextFrameCallbackOrNextEventLoop(() {
+        runInNextFrameCallback(() {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
           if (owner.currentLifecycleState >= LifecycleState.resumed) {
             _safeCallLauncher(
@@ -61,7 +61,7 @@ class _LauncherLifecycleObserver<T> with LifecycleStateChangeObserver {
 
   void _dRunOnResume(LifecycleOwner owner) {
     _firstResume = false;
-    runAfterNextFrameCallbackOrNextEventLoop(() {
+    runInNextFrameCallback(() {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
       if (owner.currentLifecycleState > LifecycleState.destroyed) {
         _safeCallLauncher(

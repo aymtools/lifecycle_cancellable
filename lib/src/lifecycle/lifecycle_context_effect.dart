@@ -51,7 +51,7 @@ class _LLauncherObserver with LifecycleStateChangeObserver {
     }
     if (_lastState < state) {
       if (state == LifecycleState.resumed) {
-        runAfterNextFrameCallbackOrNextEventLoop(() {
+        runInNextFrameCallback(() {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
           if (owner.lifecycle.currentLifecycleState >= LifecycleState.resumed &&
               _context.target?.mounted == true) {
@@ -68,7 +68,7 @@ class _LLauncherObserver with LifecycleStateChangeObserver {
 
   void _dRunOnResume(LifecycleOwner owner) {
     _firstResume = false;
-    runAfterNextFrameCallbackOrNextEventLoop(() {
+    runInNextFrameCallback(() {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
       if (owner.currentLifecycleState > LifecycleState.destroyed &&
           _context.target?.mounted == true) {
@@ -178,7 +178,7 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
     }
     if (_lastState < state) {
       if (state == LifecycleState.resumed) {
-        runAfterNextFrameCallbackOrNextEventLoop(() {
+        runInNextFrameCallback(() {
           /// 特殊情况下会resume触发在build之前故将此事件推迟
           if (owner.lifecycle.currentLifecycleState >= LifecycleState.resumed &&
               _context.target?.mounted == true) {
@@ -195,7 +195,7 @@ class _DLauncherObserver<T extends Object> with LifecycleStateChangeObserver {
 
   void _dRunOnResume(LifecycleOwner owner) {
     _firstResume = false;
-    runAfterNextFrameCallbackOrNextEventLoop(() {
+    runInNextFrameCallback(() {
       /// 特殊情况下会resume触发在build之前故将此事件推迟
       if (owner.currentLifecycleState > LifecycleState.destroyed &&
           _context.target?.mounted == true) {

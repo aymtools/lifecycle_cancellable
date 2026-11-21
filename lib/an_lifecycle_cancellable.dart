@@ -15,3 +15,4 @@ export 'src/lifecycle/lifecycle_effect.dart';
 export 'src/lifecycle/lifecycle_ext.dart';
 export 'src/listenable/change_notifier_ext.dart';
 export 'src/listenable/value_notifier.dart';
+export 'src/tools/material_support.dart';

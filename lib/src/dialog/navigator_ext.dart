@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cancellable/cancellable.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 extension NavigatorCancellableRoute on NavigatorState {
@@ -30,6 +31,7 @@ extension NavigatorCancellableRoute on NavigatorState {
   }
 
   /// 推入一个可撤销的dialog
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   Future<T?> showDialog<T>({
     required WidgetBuilder builder,
     Cancellable? cancellable,

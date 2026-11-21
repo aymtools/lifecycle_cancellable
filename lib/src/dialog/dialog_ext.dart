@@ -2,9 +2,12 @@ import 'dart:ui';
 
 import 'package:an_lifecycle_cancellable/src/dialog/navigator_ext.dart';
 import 'package:cancellable/cancellable.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/cupertino.dart';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 Future<T?> showCDialog<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -43,6 +46,7 @@ Future<T?> showCDialog<T>({
   return navigator.pushCancellableRoute(route, cancellable);
 }
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 Future<T?> showCCupertinoDialog<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -68,6 +72,7 @@ Future<T?> showCCupertinoDialog<T>({
   return navigator.pushCancellableRoute(route, cancellable);
 }
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 Future<T?> showCGeneralDialog<T extends Object?>({
   required BuildContext context,
   required RoutePageBuilder pageBuilder,
@@ -97,6 +102,7 @@ Future<T?> showCGeneralDialog<T extends Object?>({
   return navigator.pushCancellableRoute(route, cancellable);
 }
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 Future<T?> showCModalBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -186,6 +192,7 @@ Future<T?> showCModalBottomSheet<T>({
 //   return result;
 // }
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 void showCAboutDialog({
   required BuildContext context,
   Cancellable? cancellable,
@@ -216,6 +223,7 @@ void showCAboutDialog({
   );
 }
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 Future<T?> showCCupertinoModalPopup<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -243,6 +251,7 @@ Future<T?> showCCupertinoModalPopup<T>({
   return navigator.pushCancellableRoute(route, cancellable);
 }
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 void showCLicensePage({
   required BuildContext context,
   Cancellable? cancellable,

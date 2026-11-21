@@ -9,6 +9,8 @@ import 'package:an_lifecycle_cancellable/src/listenable/change_notifier_ext.dart
 import 'package:an_lifecycle_cancellable/src/listenable/value_notifier.dart';
 import 'package:an_lifecycle_cancellable/src/tools/weak_map_clear.dart';
 import 'package:anlifecycle/anlifecycle.dart';
+
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:weak_collections/weak_collections.dart';
 

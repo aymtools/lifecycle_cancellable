@@ -2,11 +2,16 @@ import 'dart:ui';
 
 import 'package:an_lifecycle_cancellable/src/dialog/dialog_ext.dart' as d;
 import 'package:cancellable/cancellable.dart';
+
+// ignore: deprecated_member_use
 import 'package:flutter/cupertino.dart';
+
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
+@Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
 extension BuildContextDialogCancellable on BuildContext {
-  ///
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   Future<T?> showCDialog<T>({
     required WidgetBuilder builder,
     Cancellable? cancellable,
@@ -33,6 +38,7 @@ extension BuildContextDialogCancellable on BuildContext {
         // traversalEdgeBehavior: traversalEdgeBehavior,
       );
 
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   Future<T?> showCCupertinoDialog<T>({
     required WidgetBuilder builder,
     Cancellable? cancellable,
@@ -53,6 +59,7 @@ extension BuildContextDialogCancellable on BuildContext {
         anchorPoint: anchorPoint,
       );
 
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   Future<T?> showCGeneralDialog<T extends Object?>({
     required RoutePageBuilder pageBuilder,
     Cancellable? cancellable,
@@ -79,6 +86,7 @@ extension BuildContextDialogCancellable on BuildContext {
         transitionDuration: transitionDuration,
       );
 
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   Future<T?> showCModalBottomSheet<T>({
     required WidgetBuilder builder,
     Cancellable? cancellable,
@@ -143,6 +151,7 @@ extension BuildContextDialogCancellable on BuildContext {
   //       transitionAnimationController: transitionAnimationController,
   //     );
 
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   void showCAboutDialog({
     Cancellable? cancellable,
     String? applicationName,
@@ -167,6 +176,7 @@ extension BuildContextDialogCancellable on BuildContext {
         anchorPoint: anchorPoint,
       );
 
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   Future<T?> showCCupertinoModalPopup<T>({
     required WidgetBuilder builder,
     Cancellable? cancellable,
@@ -191,6 +201,7 @@ extension BuildContextDialogCancellable on BuildContext {
         anchorPoint: anchorPoint,
       );
 
+  @Deprecated('use NavigatorState.pushCancellableRoute(), will remove v2.6.2')
   void showCLicensePage({
     Cancellable? cancellable,
     String? applicationName,

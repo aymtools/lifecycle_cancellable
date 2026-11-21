@@ -1,3 +1,7 @@
+## 2.6.2
+
+* Deprecate all material and cupertino dependencies for future removal.
+
 ## 2.6.1
 
 * Stream.repeatLatest add lazyListen
@@ -47,7 +51,7 @@
 ## 2.4.1
 
 * Add onDispose callback uniformly to rememberXXX.
-* ILifecycle.makeLiveCancellable() manager use weak references.
+* ILifecycle.makeLiveCancellable () manager use weak references.
 
 ## 2.4.0
 
